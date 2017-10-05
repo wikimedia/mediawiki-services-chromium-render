@@ -23,14 +23,14 @@ metrics:
   #port: 8125
 
 services:
-  - name: service-template-node
+  - name: mediawiki-services-headless-chromium
     # a relative path or the name of an npm package, if different from name
     module: ./app.js
     # optionally, a version constraint of the npm package
     # version: ^0.4.0
     # per-service config
     conf:
-      port: 6927
+      port: 3030
       # interface: localhost # uncomment to only listen on localhost
       # more per-service config settings
       # the location of the spec, defaults to spec.yaml if not specified
@@ -75,3 +75,22 @@ services:
         query: '{{ default(request.query, {}) }}'
         headers: '{{request.headers}}'
         body: '{{request.body}}'
+      # https://github.com/GoogleChrome/puppeteer/blob/v0.11.0/docs/api.md#pagepdfoptions
+      # Explicitly override defaults so that we don't have unexected results
+      # after puppeteer upgrades
+      pdf_options:
+        scale: 1
+        displayHeaderFooter: false
+        printBackground: false
+        landscape: false
+        pageRanges: ''
+        format: 'Letter'
+        margin:
+          top: '0.5in'
+          right: '0.5in'
+          # some room for page numbers
+          bottom: '0.75in'
+          left: '0.5in'
+      puppeteer_flags:
+        - '--no-sandbox'
+        - '--disable-setuid-sandbox'

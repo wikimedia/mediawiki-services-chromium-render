@@ -1,7 +1,7 @@
 {
-  "name": "service-template-node",
-  "version": "0.5.2",
-  "description": "A blueprint for MediaWiki REST API services",
+  "name": "mediawiki-services-headless-chromium",
+  "version": "0.0.1",
+  "description": "A service for converting HTML to PDF",
   "main": "./app.js",
   "scripts": {
     "start": "service-runner",
@@ -13,21 +13,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/wikimedia/service-template-node.git"
+    "url": "git://github.com/wikimedia/mediawiki-services-headless-chromium.git"
   },
-  "keywords": [
-    "REST",
-    "API",
-    "service template",
-    "MediaWiki"
-  ],
-  "author": "Wikimedia Service Team <services@wikimedia.org>",
+  "keywords": [],
+  "author": "Wikimedia Readers Web Team",
   "contributors": [],
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://phabricator.wikimedia.org/tag/service-template-node/"
+    "url": "https://phabricator.wikimedia.org/tag/mediawiki-services-headless-chromium/"
   },
-  "homepage": "https://github.com/wikimedia/service-template-node",
+  "homepage": "https://github.com/wikimedia/mediawiki-services-headless-chromium",
   "dependencies": {
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.1",
@@ -38,9 +33,10 @@
     "express": "^4.15.2",
     "js-yaml": "^3.8.2",
     "preq": "^0.5.2",
+    "puppeteer": "^0.11.0",
     "service-runner": "^2.2.5",
     "swagger-router": "^0.5.6",
-    "swagger-ui": "git+https://github.com/wikimedia/swagger-ui#master"
+    "swagger-ui": "git+https://github.com/wikimedia/swagger-ui.git#master"
   },
   "devDependencies": {
     "extend": "^3.0.0",
@@ -49,7 +45,7 @@
     "mocha-jshint": "^2.3.1",
     "mocha-lcov-reporter": "^1.3.0",
     "nsp": "^2.6.3",
-    "mocha-eslint":"^3.0.1",
+    "mocha-eslint": "^3.0.1",
     "eslint": "^3.12.0",
     "eslint-config-node-services": "^2.0.2",
     "eslint-config-wikimedia": "^0.4.0",
