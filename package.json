@@ -13,16 +13,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/wikimedia/mediawiki-services-headless-chromium.git"
+    "url": "git://github.com/wikimedia/mediawiki-services-chromium-render.git"
   },
-  "keywords": [],
+  "keywords": [
+    "PDF",
+    "chromium"
+  ],
   "author": "Wikimedia Readers Web Team",
-  "contributors": [],
+  "contributors": [
+    "Wikimedia Readers Web Team"
+  ],
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://phabricator.wikimedia.org/tag/mediawiki-services-headless-chromium/"
+    "url": "https://phabricator.wikimedia.org/tag/mediawiki-services-chromium-render/"
   },
-  "homepage": "https://github.com/wikimedia/mediawiki-services-headless-chromium",
+  "homepage": "https://github.com/wikimedia/mediawiki-services-chromium-render",
   "dependencies": {
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.1",
