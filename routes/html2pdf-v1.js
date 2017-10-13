@@ -3,10 +3,6 @@
 
 const sUtil = require('../lib/util');
 
-// shortcut
-const HTTPError = sUtil.HTTPError;
-
-
 /**
  * The main router object
  */
@@ -22,7 +18,6 @@ const puppeteer = require('puppeteer');
 
 /**
  * Renders content from `url` in PDF
- *
  * @param {string} url URL to get content from
  * @param {string} format Page size, e.g. Letter or A4, passed to understands
  * @return {<Promise<Buffer>>} Promise which resolves with PDF buffer
@@ -30,31 +25,31 @@ const puppeteer = require('puppeteer');
 function articleToPdf(url, format) {
     return new Promise((resolve, reject) => {
         puppeteer.launch({ args: app.conf.puppeteer_flags }).then(
-            function(browser) {
-                browser.newPage().then(function(page) {
-                    page.goto(url, { waitUntil: 'networkidle' }).then(function() {
+            (browser) => {
+                browser.newPage().then((page) => {
+                    page.goto(url, { waitUntil: 'networkidle' }).then(() => {
                         const options = Object.assign(
-                            {}, app.conf.pdf_options, { format: format }
+                            {}, app.conf.pdf_options, { format }
                         );
-                        page.pdf(options).then(function(pdf) {
+                        page.pdf(options).then((pdf) => {
                             resolve(pdf);
                             browser.close();
-                        }).catch(function(error) {
+                        }).catch((error) => {
                             app.logger.log('trace/error', {
                                 msg: `Cannot convert page ${url} to PDF: ${error}`
                             });
                         });
-                    }).catch(function(error) {
+                    }).catch((error) => {
                         app.logger.log('trace/error', {
                             msg: `Cannot open URL ${url}: ${error}`
                         });
                     });
-                }).catch(function(error) {
+                }).catch((error) => {
                     app.logger.log('trace/error', {
                         msg: `Cannot open new page: ${error}`
                     });
                 });
-            }).catch(function(error) {
+            }).catch((error) => {
                 app.logger.log('trace/error', {
                     msg: `Cannot launch puppeteer: ${error}`
                 });
@@ -71,12 +66,12 @@ function getContentDisposition(title) {
 /**
  * Returns PDF representation of the article
  */
-router.get('/:title/:format(Letter|A4)', function(req, res) {
-    const restbase_request = app.restbase_tpl.expand({
+router.get('/:title/:format(Letter|A4)', (req, res) => {
+    const restbaseRequest = app.restbase_tpl.expand({
         request: {
             params: {
                 domain: req.params.domain,
-                path: 'page/html/' + req.params.title
+                path: `page/html/${req.params.title}`
             }
         }
     });
@@ -86,7 +81,7 @@ router.get('/:title/:format(Letter|A4)', function(req, res) {
         'Content-Disposition': getContentDisposition(req.params.title)
     };
 
-    articleToPdf(restbase_request.uri, req.params.format).then(pdf => {
+    articleToPdf(restbaseRequest.uri, req.params.format).then((pdf) => {
         res.writeHead(200, headers);
         res.end(pdf, 'binary');
     });
@@ -103,7 +98,7 @@ module.exports = function(appObj) {
     return {
         path: '/pdf',
         api_version: 1,      // must be a number!
-        router: router
+        router
     };
 
 };
