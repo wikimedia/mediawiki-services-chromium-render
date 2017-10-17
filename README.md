@@ -9,5 +9,5 @@ Start the server:
 * `node server.js`
 
 And visit the following pages in your web browser:
-* Letter size: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/Letter
-* A4: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/A4
+* Letter size: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/letter
+* A4: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/a4

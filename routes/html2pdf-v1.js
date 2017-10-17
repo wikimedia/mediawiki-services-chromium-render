@@ -1,6 +1,5 @@
 'use strict';
 
-
 const sUtil = require('../lib/util');
 
 /**
@@ -23,38 +22,33 @@ const puppeteer = require('puppeteer');
  * @return {<Promise<Buffer>>} Promise which resolves with PDF buffer
  */
 function articleToPdf(url, format) {
-    return new Promise((resolve, reject) => {
-        puppeteer.launch({ args: app.conf.puppeteer_flags }).then(
-            (browser) => {
-                browser.newPage().then((page) => {
-                    page.goto(url, { waitUntil: 'networkidle' }).then(() => {
-                        const options = Object.assign(
-                            {}, app.conf.pdf_options, { format }
-                        );
-                        page.pdf(options).then((pdf) => {
-                            resolve(pdf);
-                            browser.close();
-                        }).catch((error) => {
-                            app.logger.log('trace/error', {
-                                msg: `Cannot convert page ${url} to PDF: ${error}`
-                            });
-                        });
-                    }).catch((error) => {
-                        app.logger.log('trace/error', {
-                            msg: `Cannot open URL ${url}: ${error}`
-                        });
-                    });
-                }).catch((error) => {
-                    app.logger.log('trace/error', {
-                        msg: `Cannot open new page: ${error}`
-                    });
-                });
-            }).catch((error) => {
-                app.logger.log('trace/error', {
-                    msg: `Cannot launch puppeteer: ${error}`
-                });
-            });
-    });
+    let browser;
+    let page;
+
+    return puppeteer.launch({ args: app.conf.puppeteer_flags })
+        .then((browser_) => {
+            browser = browser_;
+            return browser.newPage();
+        })
+        .then((page_) => {
+            page = page_;
+            return page.goto(url, { waitUntil: 'networkidle' });
+        })
+        .then(() => {
+            return page.pdf(Object.assign(
+                {}, app.conf.pdf_options, { format }
+            ));
+        })
+        .catch((error) => {
+            if (browser) {
+                browser.close();
+            }
+            throw error;
+        })
+        .then((pdf) => {
+            browser.close();
+            return pdf;
+        });
 }
 
 function getContentDisposition(title) {
@@ -66,7 +60,7 @@ function getContentDisposition(title) {
 /**
  * Returns PDF representation of the article
  */
-router.get('/:title/:format(Letter|A4)', (req, res) => {
+router.get('/:title/:format(letter|a4)', (req, res) => {
     const restbaseRequest = app.restbase_tpl.expand({
         request: {
             params: {
@@ -76,15 +70,22 @@ router.get('/:title/:format(Letter|A4)', (req, res) => {
         }
     });
 
-    const headers = {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': getContentDisposition(req.params.title)
-    };
-
-    articleToPdf(restbaseRequest.uri, req.params.format).then((pdf) => {
-        res.writeHead(200, headers);
-        res.end(pdf, 'binary');
-    });
+    return articleToPdf(restbaseRequest.uri, req.params.format)
+        .then((pdf) => {
+            const headers = {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': getContentDisposition(req.params.title)
+            };
+            res.writeHead(200, headers);
+            res.end(pdf, 'binary');
+        })
+        .catch((error) => {
+            app.logger.log('trace/error', {
+                msg: `Cannot convert page ${restbaseRequest.uri} to PDF.`,
+                error
+            });
+            res.status(500).send();
+        });
 });
 
 
