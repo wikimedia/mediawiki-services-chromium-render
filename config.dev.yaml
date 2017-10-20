@@ -94,3 +94,5 @@ services:
       puppeteer_flags:
         - '--no-sandbox'
         - '--disable-setuid-sandbox'
+      # the maximum number of puppeteer instances that can be launched at a time
+      render_concurrency: 1
