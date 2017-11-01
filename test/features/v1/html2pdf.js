@@ -10,7 +10,7 @@ describe('html2pdf', function() {
 
 	it('should return a letter-sized PDF', function() {
 		return preq.get(
-			server.config.uri + 'en.wikipedia.org/v1/pdf/Letter'
+			server.config.uri + 'en.wikipedia.org/v1/pdf/CP%2FM-86/letter'
 		)
 		.then(function(res) {
 			assert.status(res, 200);

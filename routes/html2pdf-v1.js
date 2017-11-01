@@ -65,7 +65,7 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
         request: {
             params: {
                 domain: req.params.domain,
-                path: `page/html/${req.params.title}`
+                path: `page/html/${encodeURIComponent(req.params.title)}`
             }
         }
     });
