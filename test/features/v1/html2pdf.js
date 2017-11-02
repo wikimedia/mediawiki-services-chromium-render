@@ -5,7 +5,7 @@ const assert = require('../../utils/assert.js');
 const server = require('../../utils/server.js');
 
 describe('html2pdf', function() {
-    this.timeout(5000);
+    this.timeout(20000);
     before(function () { return server.start(); });
 
     it('should return a letter-sized PDF', function() {
@@ -14,7 +14,7 @@ describe('html2pdf', function() {
         )
         .then(function(res) {
             assert.status(res, 200);
-            assert.contentType(res, 'application/PDF');
+            assert.contentType(res, 'application/pdf');
             assert.deepEqual(
                 Buffer.isBuffer(res.body), true, 'Unexpected body!');
         });

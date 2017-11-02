@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/wikimedia/mediawiki-services-chromium-render",
   "dependencies": {
-    "async": "^2.5.0",
+    "async": "^2.6.0",
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.1",
     "bunyan": "^1.8.9",

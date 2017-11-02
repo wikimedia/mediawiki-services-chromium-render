@@ -1,8 +1,7 @@
 'use strict';
 
-const Queue = require('../lib/queue');
+const { callbackErrors, Queue } = require('../lib/queue');
 const sUtil = require('../lib/util');
-const renderer = require('../lib/renderer');
 
 /**
  * The main router object
@@ -29,14 +28,20 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
 
     app.queue.push({
         uri: restbaseRequest.uri,
-        format: req.params.format,
-        conf: app.conf
+        format: req.params.format
     }, ((error, pdf) => {
         if (error) {
-            const error_ = new sUtil.HTTPError(
-                `Cannot convert page ${restbaseRequest.uri} to PDF.`
-            );
-            res.status(error_.status).send(error_);
+            let status;
+
+            if (error === callbackErrors.queueBusy) {
+                status = 503;
+            } else if (error === callbackErrors.renderFailed) {
+                status = 500;
+            }
+
+            const errorObject = new sUtil.HTTPError({ status });
+            res.status(errorObject.status).send(errorObject);
+
             return;
         }
 
@@ -53,22 +58,14 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
 module.exports = function(appObj) {
     app = appObj;
 
-    const worker = (data, callback) => {
-        renderer
-            .articleToPdf(data.uri, data.format, data.conf)
-            .then((pdf) => {
-                callback(null, pdf);
-            })
-            .catch((error) => {
-                app.logger.log('trace/error', {
-                    msg: `Cannot convert page ${data.uri} to PDF.`,
-                    error
-                });
-                callback(error, null);
-            });
-    };
-
-    app.queue = new Queue(worker, app.conf.render_concurrency);
+    const conf = app.conf;
+    app.queue = new Queue(
+        conf.render_concurrency,
+        conf.render_queue_timeout,
+        conf.puppeteer_flags,
+        conf.pdf_options,
+        app.logger
+    );
 
     // the returned object mounts the routes on
     // /{domain}/vX/mount/path

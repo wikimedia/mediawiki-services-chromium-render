@@ -96,3 +96,5 @@ services:
         - '--disable-setuid-sandbox'
       # the maximum number of puppeteer instances that can be launched at a time
       render_concurrency: 1
+      # don't wait to render a PDF after this many seconds
+      render_queue_timeout: 90
