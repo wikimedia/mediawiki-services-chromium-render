@@ -33,7 +33,8 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
         if (error) {
             let status;
 
-            if (error === callbackErrors.queueBusy) {
+            if ([callbackErrors.queueBusy, callbackErrors.queueFull]
+                .includes(error)) {
                 status = 503;
             } else if (error === callbackErrors.renderFailed) {
                 status = 500;
@@ -60,8 +61,11 @@ module.exports = function(appObj) {
 
     const conf = app.conf;
     app.queue = new Queue(
-        conf.render_concurrency,
-        conf.render_queue_timeout,
+        {
+            concurrency: conf.render_concurrency,
+            timeout: conf.render_queue_timeout,
+            maxTaskCount: conf.max_render_queue_size
+        },
         conf.puppeteer_flags,
         conf.pdf_options,
         app.logger

@@ -32,7 +32,7 @@ describe('concurrency', function() {
 
         class QueueTest extends Queue {
             _worker (data, callback) {
-                this.emit('onBeforeRender', data);
+                this._clearCancelTaskTimeout(data);
                 status = `done ${data.id}`;
                 // simulate render
                 setTimeout(() => {
@@ -40,7 +40,11 @@ describe('concurrency', function() {
                 }, data.timeout);
             };
         }
-        const q = new QueueTest(1, 90, puppeteerFlags, pdfOptions, logger);
+        const q = new QueueTest({
+            concurrency: 1,
+            timeout: 90,
+            maxTaskCount: 3
+        }, puppeteerFlags, pdfOptions, logger);
 
         // first worker must finish after 1 sec
         q.push({
@@ -71,20 +75,64 @@ describe('concurrency', function() {
         });
     });
 
+    it('should reject tasks over the task count limit', function(done) {
+        let testsCompleted = 0,
+            tasksRejected = 0;
+
+        class QueueTest extends Queue {
+            _worker (data, callback) {
+                this._clearCancelTaskTimeout(data);
+                setTimeout(() => {
+                    callback(null, {});
+                }, data.timeout);
+            };
+        }
+        const q = new QueueTest({
+            concurrency: 1,
+            timeout: 5,
+            maxTaskCount: 1
+        }, puppeteerFlags, pdfOptions, logger);
+
+        // first worker completes in 3 seconds
+        q.push({
+            id: 1,
+            timeout: 3000
+        }, (error, data) => {
+            assert.ok(error === null);
+            testsCompleted += 1;
+        });
+
+        // The following request should be rejected immediately
+        // even though it's allowed to wait 5 seconds.
+        q.push({
+            id: 2,
+            timeout: 0
+        }, (error, data) => {
+            assert.ok(testsCompleted === 0);
+            assert.ok(error === callbackErrors.queueFull);
+            done();
+        });
+    });
+
+
     it('should reject timed out tasks', function(done) {
         let tasksCompleted = 0,
             tasksRejected = 0;
 
         class QueueTest extends Queue {
             _worker (data, callback) {
-                this.emit('onBeforeRender', data);
+                this._clearCancelTaskTimeout(data);
                 // simulate render
                 setTimeout(() => {
                     callback(null, {});
                 }, data.timeout);
             };
         }
-        const q = new QueueTest(1, 1, puppeteerFlags, pdfOptions, logger);
+        const q = new QueueTest({
+            concurrency: 1,
+            timeout: 1,
+            maxTaskCount: 3
+        }, puppeteerFlags, pdfOptions, logger);
 
         // first worker completes in 3 seconds
         q.push({
