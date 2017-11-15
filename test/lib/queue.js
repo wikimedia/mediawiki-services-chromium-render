@@ -3,6 +3,7 @@
 const assert = require('../utils/assert.js');
 const { callbackErrors, Queue } = require('../../lib/queue');
 const logger = { log: () => {} };
+const renderer = { abortRender: () => {} };
 const puppeteerFlags = [
     '--no-sandbox',
     '--disable-setuid-sandbox'
@@ -42,13 +43,15 @@ describe('concurrency', function() {
         }
         const q = new QueueTest({
             concurrency: 1,
-            timeout: 90,
+            queueTimeout: 90,
+            executionTimeout: 90,
             maxTaskCount: 3
         }, puppeteerFlags, pdfOptions, logger);
 
         // first worker must finish after 1 sec
         q.push({
             id: 1,
+            renderer,
             timeout: 1000
         }, () => {
             assert.ok(status === 'done 1');
@@ -58,6 +61,7 @@ describe('concurrency', function() {
         // second worker must finish 0.5 sec after the first one
         q.push({
             id: 2,
+            renderer,
             timeout: 500
         }, () => {
             assert.ok(status === 'done 2');
@@ -67,6 +71,7 @@ describe('concurrency', function() {
         // the last worker must finish last, regardless of the timeout
         q.push({
             id: 3,
+            renderer,
             timeout: 10
         }, () => {
             assert.ok(testsCompleted === 2);
@@ -89,13 +94,15 @@ describe('concurrency', function() {
         }
         const q = new QueueTest({
             concurrency: 1,
-            timeout: 5,
+            queueTimeout: 5,
+            executionTimeout: 90,
             maxTaskCount: 1
         }, puppeteerFlags, pdfOptions, logger);
 
         // first worker completes in 3 seconds
         q.push({
             id: 1,
+            renderer,
             timeout: 3000
         }, (error, data) => {
             assert.ok(error === null);
@@ -106,6 +113,7 @@ describe('concurrency', function() {
         // even though it's allowed to wait 5 seconds.
         q.push({
             id: 2,
+            renderer,
             timeout: 0
         }, (error, data) => {
             assert.ok(testsCompleted === 0);
@@ -130,13 +138,15 @@ describe('concurrency', function() {
         }
         const q = new QueueTest({
             concurrency: 1,
-            timeout: 1,
+            queueTimeout: 1,
+            executionTimeout: 90,
             maxTaskCount: 3
         }, puppeteerFlags, pdfOptions, logger);
 
         // first worker completes in 3 seconds
         q.push({
             id: 1,
+            renderer,
             timeout: 3000
         }, (error, data) => {
             assert.ok(error === null);
@@ -146,6 +156,7 @@ describe('concurrency', function() {
         // the following two requests should be rejected
         q.push({
             id: 2,
+            renderer,
             timeout: 10
         }, (error, data) => {
             assert.ok(tasksCompleted === 0);
@@ -154,11 +165,39 @@ describe('concurrency', function() {
         });
         q.push({
             id: 3,
+            renderer,
             timeout: 20
         }, (error, data) => {
             assert.ok(tasksCompleted === 0);
             assert.ok(tasksRejected === 1);
             assert.ok(error === callbackErrors.queueBusy);
+            done();
+        });
+    });
+
+    it('should reject tasks when render takes long', function(done) {
+        class QueueTest extends Queue {
+            _render(data, callback) {
+                // simulate render
+                setTimeout(() => {
+                    callback(null, {});
+                }, data.timeout);
+            }
+        }
+        const q = new QueueTest({
+            concurrency: 10,
+            queueTimeout: 30,
+            executionTimeout: 1,
+            maxTaskCount: 10
+        }, puppeteerFlags, pdfOptions, logger);
+
+        q.push({
+            id: 1,
+            renderer,
+            timeout: 3000
+        }, (error, data) => {
+            assert.ok(error === callbackErrors.renderTimeout,
+                      'Render took more than a second.');
             done();
         });
     });

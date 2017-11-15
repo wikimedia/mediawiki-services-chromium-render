@@ -91,12 +91,17 @@ services:
           # some room for page numbers
           bottom: '0.75in'
           left: '0.5in'
-      puppeteer_flags:
-        - '--no-sandbox'
-        - '--disable-setuid-sandbox'
+      # https://github.com/GoogleChrome/puppeteer/blob/v0.11.0/docs/api.md#puppeteerlaunchoptions
+      puppeteer_options:
+        timeout: 30000
+        args:
+          - '--no-sandbox'
+          - '--disable-setuid-sandbox'
       # the maximum number of puppeteer instances that can be launched at a time
       render_concurrency: 1
       # don't wait to render a PDF after this many seconds
       render_queue_timeout: 60
       # maximum allowed number of pending jobs
       max_render_queue_size: 3
+      # the number of seconds before puppeteer terminates the browser instance
+      render_execution_timout: 90

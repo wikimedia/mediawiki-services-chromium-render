@@ -2,6 +2,7 @@
 
 const { callbackErrors, Queue } = require('../lib/queue');
 const sUtil = require('../lib/util');
+const Renderer = require('../lib/renderer');
 
 /**
  * The main router object
@@ -26,18 +27,23 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
         }
     });
 
+    const renderer = new Renderer();
     app.queue.push({
+        renderer,
         uri: restbaseRequest.uri,
         format: req.params.format
     }, ((error, pdf) => {
         if (error) {
             let status;
+            const e = callbackErrors;
 
-            if ([callbackErrors.queueBusy, callbackErrors.queueFull]
-                .includes(error)) {
-                status = 503;
-            } else if (error === callbackErrors.renderFailed) {
-                status = 500;
+            switch (error) {
+                case e.queueBusy:
+                case e.queueFull:
+                    status = 503;
+                    break;
+                default:
+                    status = 500;
             }
 
             const errorObject = new sUtil.HTTPError({ status });
@@ -63,10 +69,11 @@ module.exports = function(appObj) {
     app.queue = new Queue(
         {
             concurrency: conf.render_concurrency,
-            timeout: conf.render_queue_timeout,
+            queueTimeout: conf.render_queue_timeout,
+            executionTimeout: conf.render_execution_timout,
             maxTaskCount: conf.max_render_queue_size
         },
-        conf.puppeteer_flags,
+        conf.puppeteer_options,
         conf.pdf_options,
         app.logger
     );
