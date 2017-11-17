@@ -4,6 +4,11 @@ const preq = require('preq');
 const assert = require('../../utils/assert.js');
 const server = require('../../utils/server.js');
 
+if (!server.stopHookAdded) {
+    server.stopHookAdded = true;
+    after(() => server.stop());
+}
+
 describe('html2pdf', function() {
     this.timeout(20000);
     before(function () { return server.start(); });
