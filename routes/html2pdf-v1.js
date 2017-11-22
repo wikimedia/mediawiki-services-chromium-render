@@ -2,6 +2,7 @@
 
 const { callbackErrors, Queue } = require('../lib/queue');
 const sUtil = require('../lib/util');
+const uuid = require('cassandra-uuid');
 const Renderer = require('../lib/renderer');
 
 /**
@@ -27,8 +28,10 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
         }
     });
 
+    const id = `${uuid.TimeUuid.now().toString()}|${restbaseRequest.uri}`;
     const renderer = new Renderer();
     app.queue.push({
+        id,
         renderer,
         uri: restbaseRequest.uri,
         format: req.params.format
@@ -60,6 +63,15 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
         res.writeHead(200, headers);
         res.end(pdf, 'binary');
     }));
+
+    req.on('close', () => {
+        app.logger.log(
+            'debug/request',
+            `Connection closed by the client. ` +
+            `Will try and cancel the task with ID ${id}.`
+        );
+        app.queue.abort(id, renderer);
+    });
 });
 
 module.exports = function(appObj) {

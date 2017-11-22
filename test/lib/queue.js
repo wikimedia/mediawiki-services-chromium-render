@@ -24,7 +24,7 @@ const pdfOptions = {
     }
 };
 
-describe('concurrency', function() {
+describe('Queue', function() {
     this.timeout(5000);
 
     it('should run only one worker at a time', function(done) {
@@ -201,4 +201,78 @@ describe('concurrency', function() {
             done();
         });
     });
+
+    it('should remove task from queue when task is aborted', function(done) {
+        class QueueTest extends Queue {
+            _render(data, callback) {
+                // simulate render
+                setTimeout(() => {
+                    callback(null, {});
+                }, data.timeout);
+            }
+        }
+        const q = new QueueTest({
+            concurrency: 1,
+            queueTimeout: 30,
+            executionTimeout: 10,
+            maxTaskCount: 10
+        }, puppeteerFlags, pdfOptions, logger);
+
+        q.push({
+            id: 1,
+            renderer,
+            timeout: 1000
+        }, (error, data) => {
+            assert.ok(error === null,
+                      'Render finished.');
+            assert.ok(q._countJobsInQueue() === 0,
+                      'Queue is empty.');
+            done();
+        });
+
+        q.push({
+            id: 2,
+            renderer,
+            timeout: 500
+        }, (error, data) => {
+            assert(false, 'Callback should never be called as the job has ' +
+                   'been removed from the queue.');
+        });
+        q.abort(2);
+    });
+
+    it('should abort render when task is aborted', function(done) {
+        class QueueTest extends Queue {
+            _render(data, callback) {
+                // simulate render
+                setTimeout(() => {
+                    callback(null, {});
+                }, data.timeout);
+            }
+        }
+        const q = new QueueTest({
+            concurrency: 1,
+            queueTimeout: 30,
+            executionTimeout: 10,
+            maxTaskCount: 10
+        }, puppeteerFlags, pdfOptions, logger);
+        const renderer = {
+            abortRender: () => {
+                assert.ok(true, 'Renderer abort is called.');
+                done();
+            }
+        };
+
+        q.push({
+            id: 1,
+            renderer,
+            timeout: 5000
+        }, (error, data) => {});
+
+        // wait a little for the task to start
+        setTimeout(() => {
+            q.abort(1, renderer);
+        }, 20);
+    });
+
 });
