@@ -105,3 +105,5 @@ services:
       max_render_queue_size: 3
       # the number of seconds before puppeteer terminates the browser instance
       render_execution_timout: 90
+      # logging interval of the queue health status (in seconds)
+      queue_health_logging_interval: 3600

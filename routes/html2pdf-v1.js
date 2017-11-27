@@ -30,12 +30,13 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
 
     const id = `${uuid.TimeUuid.now().toString()}|${restbaseRequest.uri}`;
     const renderer = new Renderer();
-    app.queue.push({
+    const data = {
         id,
         renderer,
         uri: restbaseRequest.uri,
         format: req.params.format
-    }, ((error, pdf) => {
+    };
+    app.queue.push(data, ((error, pdf) => {
         if (error) {
             let status;
             const e = callbackErrors;
@@ -68,9 +69,9 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
         app.logger.log(
             'debug/request',
             `Connection closed by the client. ` +
-            `Will try and cancel the task with ID ${id}.`
+                `Will try and cancel the task ${id}.`
         );
-        app.queue.abort(id, renderer);
+        app.queue.abort(data);
     });
 });
 
@@ -83,7 +84,8 @@ module.exports = function(appObj) {
             concurrency: conf.render_concurrency,
             queueTimeout: conf.render_queue_timeout,
             executionTimeout: conf.render_execution_timout,
-            maxTaskCount: conf.max_render_queue_size
+            maxTaskCount: conf.max_render_queue_size,
+            healthLoggingInterval: conf.queue_health_logging_interval || 3600
         },
         conf.puppeteer_options,
         conf.pdf_options,

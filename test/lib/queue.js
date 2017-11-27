@@ -45,7 +45,8 @@ describe('Queue', function() {
             concurrency: 1,
             queueTimeout: 90,
             executionTimeout: 90,
-            maxTaskCount: 3
+            maxTaskCount: 3,
+            healthLoggingInterval: 300
         }, puppeteerFlags, pdfOptions, logger);
 
         // first worker must finish after 1 sec
@@ -96,7 +97,8 @@ describe('Queue', function() {
             concurrency: 1,
             queueTimeout: 5,
             executionTimeout: 90,
-            maxTaskCount: 1
+            maxTaskCount: 1,
+            healthLoggingInterval: 300
         }, puppeteerFlags, pdfOptions, logger);
 
         // first worker completes in 3 seconds
@@ -140,7 +142,8 @@ describe('Queue', function() {
             concurrency: 1,
             queueTimeout: 1,
             executionTimeout: 90,
-            maxTaskCount: 3
+            maxTaskCount: 3,
+            healthLoggingInterval: 300
         }, puppeteerFlags, pdfOptions, logger);
 
         // first worker completes in 3 seconds
@@ -188,7 +191,8 @@ describe('Queue', function() {
             concurrency: 10,
             queueTimeout: 30,
             executionTimeout: 1,
-            maxTaskCount: 10
+            maxTaskCount: 10,
+            healthLoggingInterval: 300
         }, puppeteerFlags, pdfOptions, logger);
 
         q.push({
@@ -215,7 +219,8 @@ describe('Queue', function() {
             concurrency: 1,
             queueTimeout: 30,
             executionTimeout: 10,
-            maxTaskCount: 10
+            maxTaskCount: 10,
+            healthLoggingInterval: 300
         }, puppeteerFlags, pdfOptions, logger);
 
         q.push({
@@ -229,16 +234,17 @@ describe('Queue', function() {
                       'Queue is empty.');
             done();
         });
-
-        q.push({
+        const data = {
             id: 2,
             renderer,
             timeout: 500
-        }, (error, data) => {
+        };
+
+        q.push(data, (error, data) => {
             assert(false, 'Callback should never be called as the job has ' +
                    'been removed from the queue.');
         });
-        q.abort(2);
+        q.abort(data);
     });
 
     it('should abort render when task is aborted', function(done) {
@@ -254,7 +260,8 @@ describe('Queue', function() {
             concurrency: 1,
             queueTimeout: 30,
             executionTimeout: 10,
-            maxTaskCount: 10
+            maxTaskCount: 10,
+            healthLoggingInterval: 300
         }, puppeteerFlags, pdfOptions, logger);
         const renderer = {
             abortRender: () => {
@@ -262,17 +269,17 @@ describe('Queue', function() {
                 done();
             }
         };
-
-        q.push({
+        const data = {
             id: 1,
             renderer,
             timeout: 5000
-        }, (error, data) => {});
+        };
+
+        q.push(data, (error, data) => {});
 
         // wait a little for the task to start
         setTimeout(() => {
-            q.abort(1, renderer);
+            q.abort(data);
         }, 20);
     });
-
 });
