@@ -81,10 +81,10 @@ module.exports = function(appObj) {
     const conf = app.conf;
     app.queue = new Queue(
         {
-            concurrency: conf.render_concurrency,
-            queueTimeout: conf.render_queue_timeout,
-            executionTimeout: conf.render_execution_timout,
-            maxTaskCount: conf.max_render_queue_size,
+            concurrency: conf.render_concurrency || 1,
+            queueTimeout: conf.render_queue_timeout || 60,
+            executionTimeout: conf.render_execution_timout || 90,
+            maxTaskCount: conf.max_render_queue_size || 3,
             healthLoggingInterval: conf.queue_health_logging_interval || 3600
         },
         conf.puppeteer_options,
