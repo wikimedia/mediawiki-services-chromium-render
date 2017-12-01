@@ -75,7 +75,7 @@ services:
         query: '{{ default(request.query, {}) }}'
         headers: '{{request.headers}}'
         body: '{{request.body}}'
-      # https://github.com/GoogleChrome/puppeteer/blob/v0.11.0/docs/api.md#pagepdfoptions
+      # https://github.com/GoogleChrome/puppeteer/blob/v0.13.0/docs/api.md#pagepdfoptions
       # Explicitly override defaults so that we don't have unexected results
       # after puppeteer upgrades
       pdf_options:
@@ -91,7 +91,7 @@ services:
           # some room for page numbers
           bottom: '0.75in'
           left: '0.5in'
-      # https://github.com/GoogleChrome/puppeteer/blob/v0.11.0/docs/api.md#puppeteerlaunchoptions
+      # https://github.com/GoogleChrome/puppeteer/blob/v0.13.0/docs/api.md#puppeteerlaunchoptions
       puppeteer_options:
         timeout: 30000
         args:
