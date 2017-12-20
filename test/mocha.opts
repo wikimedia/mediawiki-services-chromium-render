@@ -1,2 +1,3 @@
 --recursive
 --no-timeouts
+--exit
