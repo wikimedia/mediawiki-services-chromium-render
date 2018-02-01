@@ -1,8 +1,8 @@
 swagger: '2.0'
 info:
   version: 0.4.0
-  title: WMF Node.JS Service Template
-  description: A template for creating Node.JS services
+  title: MediaWiki PDF Render Service
+  description: A service for rendering HTML to PDFs
   termsOfService: https://wikimediafoundation.org/wiki/Terms_of_Use
   contact:
     name: the Wikimedia Services team
@@ -284,3 +284,105 @@ paths:
             status: 401
             headers:
               content-type: application/json
+
+  /{domain}/v1/pdf/{title}/{format}:
+    get:
+      tags:
+        - Page content
+      description: Gets the PDF for the page with the given title in the given format
+      parameters:
+        - in: path
+          name: domain
+          schema:
+            type: string
+          required: true
+          description: Wikipedia domain
+        - in: path
+          name: title
+          schema:
+            type: string
+          required: true
+          description: Title we want to generate PDF for
+        - in: path
+          name: format
+          schema:
+            type: string
+            enum: ['a4', 'letter']
+          required: true
+          description: PDF format
+      produces:
+        - text/html
+        - application/pdf
+        - application/json
+      responses:
+        200:
+          description: A PDF was rendered successfully
+          headers:
+            content-type:
+              schema:
+                type: string
+            content-disposition:
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        3xx:
+          description: A response requires redirection
+          headers:
+            location:
+              schema:
+                type: string
+                description: Destination title
+        4xx:
+          description: A response is not possible due to client error
+        5xx:
+          description: A response is not possible due to unexpected errors
+          content:
+            application/json:
+              schema:
+                type: object
+        503:
+          description: A response is unavailable because service queue is busy or full
+          content:
+            application/json:
+              schema:
+                type: object
+      x-amples:
+        - title: Print the Foo page from en.wp.org in letter format
+          request:
+            params:
+              title: Foo
+              format: letter
+          response:
+            status: 200
+            headers:
+              content-type: application/pdf
+              content-disposition: download; filename="Foo.pdf"; filename*=UTF-8''Foo.pdf
+        - title: Print the Bar page from en.wp.org in A4 format
+          request:
+            params:
+              title: Bar
+              format: a4
+          response:
+            status: 200
+            headers:
+              content-type: application/pdf
+              content-disposition: download; filename="Bar.pdf"; filename*=UTF-8''Bar.pdf
+        - title: Respond file not found for a nonexistent title
+          request:
+            params:
+              title: Nonexistent_title
+              format: letter
+          response:
+            status: 200 # FIX: this should return a 404. See T186127.
+            headers:
+              content-type: application/pdf # FIX: use application/json. See T186127.
+        - title: Respond bad request for an unsupported format
+          request: {}
+          response:
+            status: 404 # FIX: this should return a 400. See T186127.
+            headers:
+              content-type: text/html # FIX: use application/json. See T186127.
