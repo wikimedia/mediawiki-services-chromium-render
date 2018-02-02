@@ -42,6 +42,8 @@ router.get('/:title/:format(letter|a4)', (req, res) => {
             const e = callbackErrors;
 
             switch (error) {
+                // FIX: e.queueBusy === 0 and Boolean(0) === false so the outer
+                // conditional prohibits this state.
                 case e.queueBusy:
                 case e.queueFull:
                     status = 503;
@@ -83,7 +85,7 @@ module.exports = function(appObj) {
         {
             concurrency: conf.render_concurrency || 1,
             queueTimeout: conf.render_queue_timeout || 60,
-            executionTimeout: conf.render_execution_timout || 90,
+            executionTimeout: conf.render_execution_timeout || 90,
             maxTaskCount: conf.max_render_queue_size || 3,
             healthLoggingInterval: conf.queue_health_logging_interval || 3600
         },
