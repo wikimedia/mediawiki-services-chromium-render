@@ -285,7 +285,7 @@ paths:
             headers:
               content-type: application/json
 
-  /{domain}/v1/pdf/{title}/{format}:
+  /{domain}/v1/pdf/{title}/{format}/{type}:
     get:
       tags:
         - Page content
@@ -307,9 +307,16 @@ paths:
           name: format
           schema:
             type: string
-            enum: ['a4', 'letter']
+            enum: ['a4', 'letter', 'legal']
           required: true
           description: PDF format
+        - in: path
+          name: type
+          schema:
+            type: string
+            enum: ['mobile', 'desktop']
+          required: false
+          description: PDF type - mobile (optimized for reading on mobile devices) or desktop (regular PDF). `desktop` is the default render mode and it will used if param `type` is not passed
       produces:
         - text/html
         - application/pdf
@@ -356,16 +363,18 @@ paths:
             params:
               title: Foo
               format: letter
+              type: desktop
           response:
             status: 200
             headers:
               content-type: application/pdf
               content-disposition: download; filename="Foo.pdf"; filename*=UTF-8''Foo.pdf
-        - title: Print the Bar page from en.wp.org in A4 format
+        - title: Print the Bar page from en.wp.org in A4 format using optimized for reading on mobile devices
           request:
             params:
               title: Bar
               format: a4
+              type: mobile
           response:
             status: 200
             headers:
