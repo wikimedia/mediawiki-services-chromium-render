@@ -293,21 +293,18 @@ paths:
       parameters:
         - in: path
           name: domain
-          schema:
-            type: string
+          type: string
           required: true
           description: Wikipedia domain
         - in: path
           name: title
-          schema:
-            type: string
+          type: string
           required: true
           description: Title we want to generate PDF for
         - in: path
           name: format
-          schema:
-            type: string
-            enum: ['a4', 'letter', 'legal']
+          type: string
+          enum: ['a4', 'letter', 'legal']
           required: true
           description: PDF format
         - in: path
@@ -318,45 +315,25 @@ paths:
           required: false
           description: PDF type - mobile (optimized for reading on mobile devices) or desktop (regular PDF). `desktop` is the default render mode and it will used if param `type` is not passed
       produces:
-        - text/html
         - application/pdf
         - application/json
       responses:
         200:
           description: A PDF was rendered successfully
-          headers:
-            content-type:
-              schema:
-                type: string
-            content-disposition:
-              schema:
-                type: string
-          content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
-        3xx:
-          description: A response requires redirection
-          headers:
-            location:
-              schema:
-                type: string
-                description: Destination title
-        4xx:
-          description: A response is not possible due to client error
-        5xx:
-          description: A response is not possible due to unexpected errors
-          content:
-            application/json:
-              schema:
-                type: object
+          schema:
+            type: file
+        404:
+          description: The specified article was not found
+          schema:
+            $ref: "#/definitions/HTTPError"
+        500:
+          description: A response is unavailable because server encountered an internal error
+          schema:
+            $ref: "#/definitions/HTTPError"
         503:
           description: A response is unavailable because service queue is busy or full
-          content:
-            application/json:
-              schema:
-                type: object
+          schema:
+            $ref: "#/definitions/HTTPError"
       x-amples:
         - title: Print the Foo page from en.wp.org in letter format
           request:
@@ -386,12 +363,39 @@ paths:
               title: Nonexistent_title
               format: letter
           response:
-            status: 200 # FIX: this should return a 404. See T186127.
+            status: 404
             headers:
-              content-type: application/pdf # FIX: use application/json. See T186127.
+              content-type: application/json
+            schema:
+              type: object
+              properties:
+                name: HTTPError
+                status: 404
+                message: '404'
+                details: Article 'Nonexistent_title' not found
         - title: Respond bad request for an unsupported format
           request: {}
           response:
             status: 404 # FIX: this should return a 400. See T186127.
             headers:
               content-type: text/html # FIX: use application/json. See T186127.
+definitions:
+  HTTPError:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Error type, usually HTTPError
+      status:
+        type: integer
+        description: HTTP Error code
+      message:
+        type: string
+        description: Error type, usually error code
+      details:
+        type: string
+        description: Error details
+    required:
+      - name
+      - status
+      - message

@@ -3,7 +3,7 @@
 const { callbackErrors, Queue } = require('../lib/queue');
 const sUtil = require('../lib/util');
 const uuid = require('cassandra-uuid');
-const Renderer = require('../lib/renderer');
+const { Renderer } = require('../lib/renderer');
 
 /**
  * The main router object
@@ -45,7 +45,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
     };
     app.queue.push(data, ((error, pdf) => {
         if (error) {
-            let status;
+            let status, details;
             const e = callbackErrors;
 
             switch (error) {
@@ -54,12 +54,18 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
                 case e.queueBusy:
                 case e.queueFull:
                     status = 503;
+                    details = 'Queue full. Please try again later';
+                    break;
+                case e.pageNotFound:
+                    status = 404;
+                    details = `Article '${req.params.title}' not found`;
                     break;
                 default:
                     status = 500;
+                    details = 'Internal Server Error';
             }
 
-            const errorObject = new sUtil.HTTPError({ status });
+            const errorObject = new sUtil.HTTPError({ status, details });
             res.status(errorObject.status).send(errorObject);
 
             return;
