@@ -18,22 +18,29 @@ let app;
 /**
  * Returns PDF representation of the article
  */
-router.get('/:title/:format(letter|a4)', (req, res) => {
-    const restbaseRequest = app.restbase_tpl.expand({
+router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res) => {
+    // this code blindly assumes that domain is in '{lang}.wikipedia.org` format
+    const parts = req.params.domain.split('.');
+    const isMobileRender = req.params.type && req.params.type === 'mobile';
+    const language = parts.shift();
+
+    const requestUrl = app.mw_tpl.expand({
         request: {
             params: {
-                domain: req.params.domain,
-                path: `page/html/${encodeURIComponent(req.params.title)}`
+                language,
+                mobile: isMobileRender,
+                domain: parts.join('.'),
+                article: encodeURIComponent(req.params.title)
             }
         }
     });
 
-    const id = `${uuid.TimeUuid.now().toString()}|${restbaseRequest.uri}`;
-    const renderer = new Renderer();
+    const id = `${uuid.TimeUuid.now().toString()}|${requestUrl.uri}`;
+    const renderer = new Renderer(app.conf.user_agent);
     const data = {
         id,
         renderer,
-        uri: restbaseRequest.uri,
+        uri: requestUrl.uri,
         format: req.params.format
     };
     app.queue.push(data, ((error, pdf) => {

@@ -60,7 +60,7 @@ services:
       #   - user-agent
       #   - x-request-id
       # the user agent to use when issuing requests
-      # user_agent: service-template-node
+      user_agent: Baha's Proton Renderer
       # the template used for contacting the MW API
       mwapi_req:
         method: post
@@ -72,6 +72,12 @@ services:
       restbase_req:
         method: '{{request.method}}'
         uri: https://{{domain}}/api/rest_v1/{+path}
+        query: '{{ default(request.query, {}) }}'
+        headers: '{{request.headers}}'
+        body: '{{request.body}}'
+      mw_req:
+        method: '{{request.method}}'
+        uri: "http://{{language}}{{if(mobile, '.m', '')}}.{{domain}}/w/index.php?title={+article}"
         query: '{{ default(request.query, {}) }}'
         headers: '{{request.headers}}'
         body: '{{request.body}}'
