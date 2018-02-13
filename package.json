@@ -61,8 +61,12 @@
     "eslint-plugin-jsdoc": "^3.0.0"
   },
   "deploy": {
-    "target": "debian",
+    "target": "debian:stretch",
     "node": "6.11.1",
+    "env": {
+      "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true",
+      "CHROME_BIN": "/usr/bin/chromium"
+    },
     "dependencies": {
       "debian": [
         "chromium",
