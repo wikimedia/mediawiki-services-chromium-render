@@ -80,4 +80,4 @@ services:
         # The production instances use the Debian Stretch system version of
         # Chromium and expect the PUPPETEER_SKIP_CHROMIUM_DOWNLOAD environment
         # variable to be set at installation time.
-        executablePath: /usr/bin/chromium
+        executablePath: '{env(CHROME_BIN)}'

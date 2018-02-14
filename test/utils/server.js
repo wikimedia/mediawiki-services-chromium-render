@@ -32,6 +32,16 @@ config.conf.logging = {
     level: 'trace',
     stream: logStream()
 };
+
+// If CHROME_BIN is defined, override the Puppeteer configuration to use it.
+// This is needed by CI to use the Debian packaged Chromium system install
+// instead of a Puppeteer packaged install which is skipped in CI via
+// PUPPETEER_SKIP_CHROMIUM_DOWNLOAD.
+if (process.env.CHROME_BIN !== undefined) {
+    config.service.conf.puppeteer_options.executablePath
+        = process.env.CHROME_BIN;
+}
+
 // make a deep copy of it for later reference
 const origConfig = extend(true, {}, config);
 
