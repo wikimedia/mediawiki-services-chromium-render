@@ -45,7 +45,8 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
     };
     app.queue.push(data, ((error, pdf) => {
         if (error) {
-            let status, details;
+            let status;
+            let details;
             const e = callbackErrors;
 
             switch (error) {
