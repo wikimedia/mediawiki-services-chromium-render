@@ -55,30 +55,5 @@ describe('express app', function() {
             assert.deepEqual(res.headers['x-webkit-csp'], 'default-src');
         });
     });
-
-    it.skip('should get static content gzipped', () => {
-        return preq.get({
-            uri: `${server.config.uri}static/index.html`,
-            headers: {
-                'accept-encoding': 'gzip, deflate'
-            }
-        }).then((res) => {
-            // check that the response is gzip-ed
-            assert.deepEqual(res.headers['content-encoding'], 'gzip', 'Expected gzipped contents!');
-        });
-    });
-
-    it('should get static content uncompressed', () => {
-        return preq.get({
-            uri: `${server.config.uri}static/index.html`,
-            headers: {
-                'accept-encoding': ''
-            }
-        }).then((res) => {
-            // check that the response is gzip-ed
-            const contentEncoding = res.headers['content-encoding'];
-            assert.deepEqual(contentEncoding, undefined, 'Did not expect gzipped contents!');
-        });
-    });
 });
 

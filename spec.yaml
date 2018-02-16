@@ -18,7 +18,6 @@ paths:
     get:
       tags:
         - Root
-        - Robots
       description: Gets robots.txt
       x-amples:
         - title: robots.txt check
@@ -58,87 +57,6 @@ paths:
               fooo: true
           response:
             status: 404
-  # from routes/v1.js
-  /{domain}/v1/siteinfo{/prop}:
-    get:
-      tags:
-        - Site info
-        - MW API call
-        - Example
-      description: Calls the MW API siteinfo action and returns the response
-      produces:
-        - application/json
-      x-amples:
-        - title: site info for default domain
-          request: {}
-          response:
-            status: 200
-            headers:
-              content-type: application/json
-        - title: site info for a non-existent domain
-          request:
-            params:
-              domain: my.fake.domain
-          response:
-            status: 504
-            headers:
-              content-type: application/json
-        - title: site info check for valid prop
-          request:
-            params:
-              prop: sitename
-          response:
-            status: 200
-            headers:
-              content-type: application/json
-            body:
-              sitename: Wikipedia
-        - title: site info check for invalid prop
-          request:
-            params:
-              prop: blaprop
-          response:
-            status: 404
-            headers:
-              content-type: application/json
-  /{domain}/v1/page/{title}:
-    get:
-      tags:
-        - Page content
-        - Example
-      description: Gets the HTML for the page with the given title
-      produces:
-        - text/html
-        - application/json
-      x-amples:
-        - title: get the Foobar page from en.wp.org
-          request:
-            params:
-              title: Foobar
-          response:
-            status: 200
-            headers:
-              content-type: text/html
-  /{domain}/v1/page/{title}/lead:
-    get:
-      tags:
-        - Page content
-        - Lead section
-        - Example
-      description: Gets the lead-section HTML for the page with the given title
-      produces:
-        - text/html
-        - application/json
-      x-amples:
-        - title: get the lead section for Barack Obama
-          request:
-            params:
-              title: Barack Obama
-          response:
-            status: 200
-            headers:
-              content-type: text/html
-  # from routes/info.js
   /_info:
     get:
       tags:
@@ -162,7 +80,6 @@ paths:
     get:
       tags:
         - Service information
-        - Service name
       description: Gets the name of the service
       produces:
         - application/json
@@ -179,7 +96,6 @@ paths:
     get:
       tags:
         - Service information
-        - Service version
       description: Gets the running version of the service
       produces:
         - application/json
@@ -196,111 +112,29 @@ paths:
     get:
       tags:
         - Service information
-        - Service homepage
       description: Redirects to the home page
       x-amples:
         - title: redirect to the home page
           request: {}
           response:
             status: 301
-  # from routes/ex.js
-  /ex/err/array:
-    get:
-      tags:
-        - Example
-        - Error
-        - Internal error
-      description: Generates an internal error due to a wrong array declaration
-      produces:
-        - application/json
-      x-amples:
-        - title: wrong array declaration example
-          request: {}
-          response:
-            status: 500
-            headers:
-              content-type: application/json
-  /ex/err/file:
-    get:
-      tags:
-        - Example
-        - Error
-        - Internal error
-      description: Generates an internal error due to a non-existing file
-      produces:
-        - application/json
-      x-amples:
-        - title: non-existing file example
-          request: {}
-          response:
-            status: 500
-            headers:
-              content-type: application/json
-  /ex/err/manual/error:
-    get:
-      tags:
-        - Example
-        - Error
-        - Internal error
-      description: Generates an internal error due to a user-thrown error
-      produces:
-        - application/json
-      x-amples:
-        - title: user error example
-          request: {}
-          response:
-            status: 500
-            headers:
-              content-type: application/json
-  /ex/err/manual/deny:
-    get:
-      tags:
-        - Example
-        - Error
-        - Access denied
-      description: Generates an access-denied error
-      produces:
-        - application/json
-      x-amples:
-        - title: access denied error example
-          request: {}
-          response:
-            status: 403
-            headers:
-              content-type: application/json
-  /ex/err/manual/auth:
-    get:
-      tags:
-        - Example
-        - Error
-        - Unauthorised access
-      description: Generates an unauthorised error
-      produces:
-        - application/json
-      x-amples:
-        - title: unauthorised error example
-          request: {}
-          response:
-            status: 401
-            headers:
-              content-type: application/json
 
   /{domain}/v1/pdf/{title}/{format}/{type}:
     get:
       tags:
-        - Page content
-      description: Gets the PDF for the page with the given title in the given format
+        - PDF Rendering
+      description: Generates a PDF for the article with the given title in the given format
       parameters:
         - in: path
           name: domain
           type: string
           required: true
-          description: Wikipedia domain
+          description: 'Wikipedia domain including language subdomain - example: en.wikipedia.org'
         - in: path
           name: title
           type: string
           required: true
-          description: Title we want to generate PDF for
+          description: Title of the article we want to generate PDF for
         - in: path
           name: format
           type: string
@@ -312,8 +146,8 @@ paths:
           schema:
             type: string
             enum: ['mobile', 'desktop']
-          required: false
-          description: PDF type - mobile (optimized for reading on mobile devices) or desktop (regular PDF). `desktop` is the default render mode and it will used if param `type` is not passed
+          default: desktop
+          description: PDF type - `mobile` (optimized for reading on mobile devices) or `desktop` (regular PDF). `desktop` is the default render mode and it will used if param `type` is not passed
       produces:
         - application/pdf
         - application/json
