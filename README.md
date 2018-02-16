@@ -63,7 +63,8 @@ respectively with some defaults inlined in
   to `30000`.
 - `executablePath`: The Chromium executable path to use. This option is most
   relevant when skipping Puppeteer's bundled Chromium install via the
-  `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD` [Puppeteer environment variable].
+  `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD` [Puppeteer environment variable]. The
+  `CHROME_BIN` environment variable overrides this configuration.
 
 Additional documentation is available in the [Puppeteer docs].
 
