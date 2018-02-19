@@ -1,8 +1,24 @@
 'use strict';
 
+const assert = require('assert');
 
-var assert = require('assert');
+function deepEqual(result, expected, message) {
 
+    try {
+        if (typeof expected === 'string') {
+            assert.ok(result === expected || (new RegExp(expected).test(result)));
+        } else {
+            assert.deepEqual(result, expected, message);
+        }
+    } catch (e) {
+        /* eslint-disable no-console */
+        console.log(`Expected:\n${JSON.stringify(expected, null, 2)}`);
+        console.log(`Result:\n${JSON.stringify(result, null, 2)}`);
+        /* eslint-enable no-console */
+        throw e;
+    }
+
+}
 
 /**
  * Asserts whether the return status was as expected
@@ -10,7 +26,7 @@ var assert = require('assert');
 function status(res, expected) {
 
     deepEqual(res.status, expected,
-        'Expected status to be ' + expected + ', but was ' + res.status);
+        `Expected status to be ${expected}, but was ${res.status}`);
 
 }
 
@@ -20,9 +36,9 @@ function status(res, expected) {
  */
 function contentType(res, expected) {
 
-    var actual = res.headers['content-type'];
+    const actual = res.headers['content-type'];
     deepEqual(actual, expected,
-        'Expected content-type to be ' + expected + ', but was ' + actual);
+        `Expected content-type to be ${expected}, but was ${actual}`);
 
 }
 
@@ -42,31 +58,15 @@ function isDeepEqual(result, expected, message) {
 
 }
 
-
-function deepEqual(result, expected, message) {
-
-    try {
-        if (typeof expected === 'string') {
-            assert.ok(result === expected || (new RegExp(expected).test(result)));
-        } else {
-            assert.deepEqual(result, expected, message);
-        }
-    } catch (e) {
-        console.log('Expected:\n' + JSON.stringify(expected, null, 2));
-        console.log('Result:\n' + JSON.stringify(result, null, 2));
-        throw e;
-    }
-
-}
-
-
 function notDeepEqual(result, expected, message) {
 
     try {
         assert.notDeepEqual(result, expected, message);
     } catch (e) {
-        console.log('Not expected:\n' + JSON.stringify(expected, null, 2));
-        console.log('Result:\n' + JSON.stringify(result, null, 2));
+        /* eslint-disable no-console */
+        console.log(`Not expected:\n${JSON.stringify(expected, null, 2)}`);
+        console.log(`Result:\n${JSON.stringify(result, null, 2)}`);
+        /* eslint-enable no-console */
         throw e;
     }
 
@@ -75,7 +75,7 @@ function notDeepEqual(result, expected, message) {
 
 function fails(promise, onRejected) {
 
-    var failed = false;
+    let failed = false;
 
     function trackFailure(e) {
         failed = true;
@@ -100,4 +100,3 @@ module.exports.isDeepEqual    = isDeepEqual;
 module.exports.notDeepEqual   = notDeepEqual;
 module.exports.contentType    = contentType;
 module.exports.status         = status;
-
