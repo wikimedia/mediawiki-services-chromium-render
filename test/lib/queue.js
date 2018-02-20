@@ -28,18 +28,18 @@ describe('Queue', function() {
     this.timeout(5000);
 
     it('should run only one worker at a time', function(done) {
-        let status,
-            testsCompleted = 0;
+        let status;
+        let testsCompleted = 0;
 
         class QueueTest extends Queue {
-            _worker (data, callback) {
+            _worker(data, callback) {
                 this._clearCancelTaskTimeout(data);
                 status = `done ${data.id}`;
                 // simulate render
                 setTimeout(() => {
                     callback();
                 }, data.timeout);
-            };
+            }
         }
         const q = new QueueTest({
             concurrency: 1,
@@ -82,16 +82,15 @@ describe('Queue', function() {
     });
 
     it('should reject tasks over the task count limit', function(done) {
-        let testsCompleted = 0,
-            tasksRejected = 0;
+        let testsCompleted = 0;
 
         class QueueTest extends Queue {
-            _worker (data, callback) {
+            _worker(data, callback) {
                 this._clearCancelTaskTimeout(data);
                 setTimeout(() => {
                     callback(null, {});
                 }, data.timeout);
-            };
+            }
         }
         const q = new QueueTest({
             concurrency: 1,
@@ -126,17 +125,17 @@ describe('Queue', function() {
 
 
     it('should reject timed out tasks', function(done) {
-        let tasksCompleted = 0,
-            tasksRejected = 0;
+        let tasksCompleted = 0;
+        let tasksRejected = 0;
 
         class QueueTest extends Queue {
-            _worker (data, callback) {
+            _worker(data, callback) {
                 this._clearCancelTaskTimeout(data);
                 // simulate render
                 setTimeout(() => {
                     callback(null, {});
                 }, data.timeout);
-            };
+            }
         }
         const q = new QueueTest({
             concurrency: 1,
@@ -201,7 +200,7 @@ describe('Queue', function() {
             timeout: 3000
         }, (error, data) => {
             assert.ok(error === callbackErrors.renderTimeout,
-                      'Render took more than a second.');
+                'Render took more than a second.');
             done();
         });
     });
@@ -229,9 +228,9 @@ describe('Queue', function() {
             timeout: 1000
         }, (error, data) => {
             assert.ok(error === null,
-                      'Render finished.');
+                'Render finished.');
             assert.ok(q._countJobsInQueue() === 0,
-                      'Queue is empty.');
+                'Queue is empty.');
             done();
         });
         const data = {
