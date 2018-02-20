@@ -34,7 +34,7 @@ launches Chromium, navigates to the webpage like a desktop user would, requests
 a PDF for the visited page, and finally terminates the browser.
 
 ## Responses
-Responses are documented in the [swagger spec](spec.template.yaml).
+Responses are documented in the [swagger spec](spec.yaml).
 
 ## Server-side configuration
 Development and production configurations are specified in
