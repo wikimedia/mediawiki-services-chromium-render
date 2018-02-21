@@ -5,8 +5,8 @@ MediaWiki Service for rendering wiki pages in PDF using headless chromium
 1. Install dependencies with `npm install`
 2. Start the service with `npm start`
 3. Use the service by visiting the following pages in a web browser:
-    * Letter size: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/letter
-    * A4: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/a4
+    * Legal size, easy to read on mobile devices: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/legal/mobile
+    * A4: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/a4/desktop
 4. Perform tests with `npm test`
 5. Identify test coverage with `npm run coverage`
 
@@ -33,14 +33,18 @@ The renderer is the interface into a literal Chromium browser instance. It
 launches Chromium, navigates to the webpage like a desktop user would, requests
 a PDF for the visited page, and finally terminates the browser.
 
+Service can render mobile-friendly PDFs. To enable mobile friendly mode pass
+`mobile` as last parameter. Chromium-renderer will fetch the article page
+using mobile url which applies MobileFrontend formatting and uses MinervaNeue
+as default skin.
+
 ## Responses
 Responses are documented in the [swagger spec](spec.yaml).
 
 ## Server-side configuration
-Development and production configurations are specified in
-[config.dev.yaml](config.dev.yaml) and [config.prod.yaml](config.prod.yaml),
-respectively with some defaults inlined in
-[html2pdf-v1.js](routes/html2pdf-v1.js). The following options are supported.
+Development configuration is specified in [config.dev.yaml](config.dev.yaml),
+respectively with some defaults inlined in [html2pdf-v1.js](routes/html2pdf-v1.js).
+The following options are supported.
 
 ### Request processing
 - `render_concurrency`: The maximum number of Puppeteer instances that can be
