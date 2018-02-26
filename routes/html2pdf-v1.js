@@ -36,7 +36,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
     });
 
     const id = `${uuid.TimeUuid.now().toString()}|${requestUrl.uri}`;
-    const renderer = new Renderer(app.conf.user_agent);
+    const renderer = new Renderer(app.conf.user_agent, isMobileRender);
     const data = {
         id,
         renderer,
