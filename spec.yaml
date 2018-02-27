@@ -27,36 +27,6 @@ paths:
             headers:
               user-agent: '*'
               disallow: '/'
-  /:
-    get:
-      tags:
-        - Root
-      description: The root service end-point
-      produces:
-        - application/json
-      x-amples:
-        - title: root with no query params
-          request: {}
-          response:
-            status: 404
-        - title: spec from root
-          request:
-            query:
-              spec: true
-          response:
-            status: 200
-        - title: doc from root
-          request:
-            query:
-              doc: true
-          response:
-            status: 200
-        - title: root with wrong query param
-          request:
-            query:
-              fooo: true
-          response:
-            status: 404
   /_info:
     get:
       tags:
