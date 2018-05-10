@@ -48,7 +48,6 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
             let status;
             let details;
             const e = callbackErrors;
-
             switch (error) {
                 // FIX: e.queueBusy === 0 and Boolean(0) === false so the outer
                 // conditional prohibits this state.
@@ -68,7 +67,6 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
 
             const errorObject = new sUtil.HTTPError({ status, details });
             res.status(errorObject.status).send(errorObject);
-
             return;
         }
 
@@ -77,6 +75,9 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
             'Content-Disposition': sUtil.getContentDisposition(
                 req.params.title)
         };
+        app.metrics.increment(`request.type.${req.params.type}`);
+        app.metrics.increment(`request.format.${req.params.format}`);
+        app.metrics.gauge(`request.pdf.size`, pdf.length);
         res.writeHead(200, headers);
         res.end(pdf, 'binary');
     }));
@@ -105,7 +106,8 @@ module.exports = function(appObj) {
         },
         conf.puppeteer_options,
         conf.pdf_options,
-        app.logger
+        app.logger,
+        app.metrics
     );
 
     // the returned object mounts the routes on
