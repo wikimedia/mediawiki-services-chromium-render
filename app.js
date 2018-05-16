@@ -128,6 +128,15 @@ function initApp(options) {
     // use the application/x-www-form-urlencoded parser
     app.use(bodyParser.urlencoded({ extended: true }));
 
+    // Puppeteer options
+    if (!app.conf.puppeteer_options) {
+        app.conf.puppeteer_options = {};
+    }
+    // If CHROME_BIN is defined, tell puppeteer to use it
+    if (process.env.CHROME_BIN) {
+        app.conf.puppeteer_options.executablePath = process.env.CHROME_BIN;
+    }
+
     return BBPromise.resolve(app);
 
 }
