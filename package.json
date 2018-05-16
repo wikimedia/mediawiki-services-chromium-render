@@ -1,5 +1,5 @@
 {
-  "name": "mediawiki-services-chromium-render",
+  "name": "proton",
   "version": "0.0.1",
   "description": "A service for converting HTML to PDF using headless Chromium",
   "main": "./app.js",
@@ -25,7 +25,7 @@
   ],
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://phabricator.wikimedia.org/tag/mediawiki-services-chromium-render/"
+    "url": "https://phabricator.wikimedia.org/tag/proton/"
   },
   "homepage": "https://github.com/wikimedia/mediawiki-services-chromium-render",
   "dependencies": {
