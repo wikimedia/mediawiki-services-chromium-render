@@ -10,7 +10,8 @@ const puppeteerFlags = [
 ];
 const metrics = {
     increment: () => {},
-    timing: () => {}
+    timing: () => {},
+    gauge: () => {}
 };
 
 const pdfOptions = {
