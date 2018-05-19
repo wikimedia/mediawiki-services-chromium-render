@@ -8,6 +8,11 @@ const puppeteerFlags = [
     '--no-sandbox',
     '--disable-setuid-sandbox'
 ];
+const metrics = {
+    increment: () => {},
+    timing: () => {}
+};
+
 const pdfOptions = {
     scale: 1,
     displayHeaderFooter: false,
@@ -47,7 +52,7 @@ describe('Queue', function() {
             executionTimeout: 90,
             maxTaskCount: 3,
             healthLoggingInterval: 300
-        }, puppeteerFlags, pdfOptions, logger);
+        }, puppeteerFlags, pdfOptions, logger, metrics);
 
         // first worker must finish after 1 sec
         q.push({
@@ -98,7 +103,7 @@ describe('Queue', function() {
             executionTimeout: 90,
             maxTaskCount: 1,
             healthLoggingInterval: 300
-        }, puppeteerFlags, pdfOptions, logger);
+        }, puppeteerFlags, pdfOptions, logger, metrics);
 
         // first worker completes in 3 seconds
         q.push({
@@ -143,7 +148,7 @@ describe('Queue', function() {
             executionTimeout: 90,
             maxTaskCount: 3,
             healthLoggingInterval: 300
-        }, puppeteerFlags, pdfOptions, logger);
+        }, puppeteerFlags, pdfOptions, logger, metrics);
 
         // first worker completes in 3 seconds
         q.push({
@@ -192,7 +197,7 @@ describe('Queue', function() {
             executionTimeout: 1,
             maxTaskCount: 10,
             healthLoggingInterval: 300
-        }, puppeteerFlags, pdfOptions, logger);
+        }, puppeteerFlags, pdfOptions, logger, metrics);
 
         q.push({
             id: 1,
@@ -220,7 +225,7 @@ describe('Queue', function() {
             executionTimeout: 10,
             maxTaskCount: 10,
             healthLoggingInterval: 300
-        }, puppeteerFlags, pdfOptions, logger);
+        }, puppeteerFlags, pdfOptions, logger, metrics);
 
         q.push({
             id: 1,
@@ -261,7 +266,7 @@ describe('Queue', function() {
             executionTimeout: 10,
             maxTaskCount: 10,
             healthLoggingInterval: 300
-        }, puppeteerFlags, pdfOptions, logger);
+        }, puppeteerFlags, pdfOptions, logger, metrics);
         const renderer = {
             abortRender: () => {
                 assert.ok(true, 'Renderer abort is called.');
