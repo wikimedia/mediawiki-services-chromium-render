@@ -70,7 +70,8 @@
     "dependencies": {
       "debian": [
         "chromium",
-        "fonts-liberation"
+        "fonts-liberation",
+        "fonts-noto"
       ],
       "_all": []
     }
