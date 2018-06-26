@@ -55,6 +55,11 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
                 case e.queueFull:
                     status = 503;
                     details = 'Queue full. Please try again later';
+                    // Pool manager will depool the service once it receives 5xx error
+                    // 503 is an expected state, and we should re-pool this server after
+                    // render_queue_timeout seconds  which means queue should be empty now
+                    // (or picked to render, or rejected because of the timeout)
+                    res.set('Retry-After', app.conf.render_queue_timeout || 60);
                     break;
                 case e.pageNotFound:
                     status = 404;
