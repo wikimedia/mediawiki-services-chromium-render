@@ -3,6 +3,7 @@
 const { callbackErrors, Queue } = require('../lib/queue');
 const sUtil = require('../lib/util');
 const uuid = require('cassandra-uuid');
+const apiUtil = require('../lib/api-util');
 const { Renderer } = require('../lib/renderer');
 
 /**
@@ -16,10 +17,82 @@ const router = sUtil.router();
 let app;
 
 /**
- * Returns PDF representation of the article
+ * Handle the PDF rendering error.
+ * @param {Integer} error Error code, one of callbackErrors
+ * @param {string} title Article title
+ * @param {Object} res Express response resource
  */
-router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res) => {
-    // this code blindly assumes that domain is in '{lang}.wikipedia.org` format
+function handleError(error, title, res) {
+    let status;
+    let details;
+    switch (error) {
+        // FIX: e.queueBusy === 0 and Boolean(0) === false so the outer
+        // conditional prohibits this state.
+        case callbackErrors.queueBusy:
+        case callbackErrors.queueFull:
+            status = 503;
+            details = 'Queue full. Please try again later';
+            // Pool manager will depool the service once it receives 5xx error
+            // 503 is an expected state, and we should re-pool this server after
+            // render_queue_timeout seconds  which means queue should be empty now
+            // (or picked to render, or rejected because of the timeout)
+            res.set('Retry-After', app.conf.render_queue_timeout || 60);
+            details = 'Queue full. Please try again later';
+            break;
+        case callbackErrors.pageNotFound:
+            status = 404;
+            details = `Article '${title}' not found`;
+            break;
+        default:
+            status = 500;
+            details = 'Internal Server Error';
+    }
+
+    const errorObject = new sUtil.HTTPError({ status, details });
+    res.status(errorObject.status).send(errorObject);
+    return;
+}
+
+/**
+ * Handle the PDF rendering job, registers new job in the queue and handles output
+ * @param {Object} data result of buildRequestData() function call
+ * @param {string} title Article title
+ * @param {Object} res Express response object
+ */
+function handlePDFRequest(data, title, res) {
+    app.queue.push(data, ((error, pdf) => {
+        if (error) {
+            return handleError(error, title, res);
+        }
+
+        // Async Queue doesn't handle aborting jobs well. `pdf` can be undefined
+        // when user aborted the request that already started to render.
+        if (pdf) {
+            const headers = {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': sUtil.getContentDisposition(title)
+            };
+            app.metrics.gauge(`request.pdf.size`, pdf.length);
+            res.writeHead(200, headers);
+            res.end(pdf, 'binary');
+        } else {
+            // no output just close the resource if it's not already closed (aborted)
+            try {
+                res.end();
+            } catch (err) {
+                // do nothing
+            }
+        }
+
+    }));
+}
+
+/**
+ * Utility function to build data object passed to the queue
+ * @param {Object} req Express Request object
+ * @return {{id: string, renderer: Object, uri: string, format: string}}
+ */
+function buildRequestData(req) {
     const parts = req.params.domain.split('.');
     const isMobileRender = req.params.type && req.params.type === 'mobile';
     const language = parts.shift();
@@ -37,73 +110,47 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
 
     const id = `${uuid.TimeUuid.now().toString()}|${requestUrl.uri}`;
     const renderer = new Renderer(app.conf.user_agent, isMobileRender);
-    const data = {
+    return {
         id,
         renderer,
         uri: requestUrl.uri,
         format: req.params.format
     };
+}
+
+/**
+ * Returns PDF representation of the article
+ */
+router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res) => {
+    const data = buildRequestData(req);
+    const title = req.params.title;
+    const encodedTitle = encodeURIComponent(title);
+
     app.metrics.increment(`request.type.${req.params.type}`);
     app.metrics.increment(`request.format.${req.params.format}`);
-    app.queue.push(data, ((error, pdf) => {
-        if (error) {
-            let status;
-            let details;
-            const e = callbackErrors;
-            switch (error) {
-                // FIX: e.queueBusy === 0 and Boolean(0) === false so the outer
-                // conditional prohibits this state.
-                case e.queueBusy:
-                case e.queueFull:
-                    status = 503;
-                    details = 'Queue full. Please try again later';
-                    // Pool manager will depool the service once it receives 5xx error
-                    // 503 is an expected state, and we should re-pool this server after
-                    // render_queue_timeout seconds  which means queue should be empty now
-                    // (or picked to render, or rejected because of the timeout)
-                    res.set('Retry-After', app.conf.render_queue_timeout || 60);
-                    break;
-                case e.pageNotFound:
-                    status = 404;
-                    details = `Article '${req.params.title}' not found`;
-                    break;
-                default:
-                    status = 500;
-                    details = 'Internal Server Error';
-            }
 
-            const errorObject = new sUtil.HTTPError({ status, details });
-            res.status(errorObject.status).send(errorObject);
-            return;
-        }
-
-        // Async Queue doesn't handle aborting jobs well. `pdf` can be uqndefined
-        // when user aborted the request that already started to render.
-        if (pdf) {
-            const headers = {
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': sUtil.getContentDisposition(
-                    req.params.title)
-            };
-            app.metrics.gauge(`request.pdf.size`, pdf.length);
-            res.writeHead(200, headers);
-            res.end(pdf, 'binary');
+    // this code blindly assumes that domain is in '{lang}.wikipedia.org` format
+    apiUtil.restApiGet(app, req.params.domain, `page/title/${encodedTitle}`).then(() => {
+        // we don't need to process the response, we're just expecting that article exists
+        return handlePDFRequest(data, title, res);
+    }, (err) => {
+        if (err.status === 404) {
+            return handleError(callbackErrors.pageNotFound, title, res);
         } else {
-            // no output just close the resource if it's not already closed (aborted)
-            try {
-                res.end();
-            } catch (err) {
-                // do nothing
-            }
-        }
+            app.logger.log(
+                'error/request',
+                `Restbase page/html/${title} request returned ${err.status} code`
+            );
 
-    }));
+            return handleError(callbackErrors.renderFailed, title, res);
+        }
+    });
 
     req.on('close', () => {
         app.logger.log(
             'debug/request',
             `Connection closed by the client. ` +
-                `Will try and cancel the task ${id}.`
+                `Will try and cancel the task ${data.id}.`
         );
         app.queue.abort(data);
     });
