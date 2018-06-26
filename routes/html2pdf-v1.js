@@ -43,6 +43,8 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
         uri: requestUrl.uri,
         format: req.params.format
     };
+    app.metrics.increment(`request.type.${req.params.type}`);
+    app.metrics.increment(`request.format.${req.params.format}`);
     app.queue.push(data, ((error, pdf) => {
         if (error) {
             let status;
@@ -75,16 +77,26 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
             return;
         }
 
-        const headers = {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': sUtil.getContentDisposition(
-                req.params.title)
-        };
-        app.metrics.increment(`request.type.${req.params.type}`);
-        app.metrics.increment(`request.format.${req.params.format}`);
-        app.metrics.gauge(`request.pdf.size`, pdf.length);
-        res.writeHead(200, headers);
-        res.end(pdf, 'binary');
+        // Async Queue doesn't handle aborting jobs well. `pdf` can be uqndefined
+        // when user aborted the request that already started to render.
+        if (pdf) {
+            const headers = {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': sUtil.getContentDisposition(
+                    req.params.title)
+            };
+            app.metrics.gauge(`request.pdf.size`, pdf.length);
+            res.writeHead(200, headers);
+            res.end(pdf, 'binary');
+        } else {
+            // no output just close the resource if it's not already closed (aborted)
+            try {
+                res.end();
+            } catch (err) {
+                // do nothing
+            }
+        }
+
     }));
 
     req.on('close', () => {
