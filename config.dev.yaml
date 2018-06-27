@@ -92,9 +92,15 @@ services:
       # https://github.com/GoogleChrome/puppeteer/blob/v0.13.0/docs/api.md#puppeteerlaunchoptions
       puppeteer_options:
         timeout: 30000
+        headless: true
         args:
           - '--no-sandbox'
           - '--disable-setuid-sandbox'
+          - '--font-rendering-hinting=medium'
+          - '--enable-font-antialiasing'
+          - '--hide-scrollbars'
+          - '--disable-gpu'
+          - '--no-first-run'
       # the maximum number of puppeteer instances that can be launched at a time
       render_concurrency: 1
       # don't wait to render a PDF after this many seconds
