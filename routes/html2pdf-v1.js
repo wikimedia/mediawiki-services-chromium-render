@@ -57,9 +57,18 @@ function handleError(error, title, res) {
  * Handle the PDF rendering job, registers new job in the queue and handles output
  * @param {Object} data result of buildRequestData() function call
  * @param {string} title Article title
+ * @param {Object} req Request object
  * @param {Object} res Express response object
  */
-function handlePDFRequest(data, title, res) {
+function handlePDFRequest(data, title, req, res) {
+    req.on('close', () => {
+        app.logger.log(
+            'debug/request',
+            `Connection closed by the client. ` +
+                `Will try and cancel the task ${data.id}.`
+        );
+        app.queue.abort(data);
+    });
     app.queue.push(data, ((error, pdf) => {
         if (error) {
             return handleError(error, title, res);
@@ -132,28 +141,20 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
     // this code blindly assumes that domain is in '{lang}.wikipedia.org` format
     apiUtil.restApiGet(app, req.params.domain, `page/title/${encodedTitle}`).then(() => {
         // we don't need to process the response, we're just expecting that article exists
-        return handlePDFRequest(data, title, res);
+        return handlePDFRequest(data, title, req, res);
     }, (err) => {
         if (err.status === 404) {
             return handleError(callbackErrors.pageNotFound, title, res);
         } else {
             app.logger.log(
                 'error/request',
-                `Restbase page/html/${title} request returned ${err.status} code`
+                `Restbase page/title/${title} request returned ${err.status} code`
             );
 
             return handleError(callbackErrors.renderFailed, title, res);
         }
     });
 
-    req.on('close', () => {
-        app.logger.log(
-            'debug/request',
-            `Connection closed by the client. ` +
-                `Will try and cancel the task ${data.id}.`
-        );
-        app.queue.abort(data);
-    });
 });
 
 module.exports = function(appObj) {
