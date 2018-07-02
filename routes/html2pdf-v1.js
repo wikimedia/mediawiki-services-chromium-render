@@ -88,32 +88,61 @@ function handlePDFJob(data, title, res) {
 }
 
 /**
+ * Assembles the MW request object to be used later to retrieve the HTML
+ * @param {Object} reqParams the request parameters passed in to the service
+ * @return {Object} the assembled request object
+ */
+function assembleRequest(reqParams) {
+    const extraParams = {
+        mobile: reqParams.type === 'mobile',
+        extdomain: reqParams.domain
+    };
+
+    if (extraParams.mobile) {
+        // TODO: find a way not to use this ugly ugly hack
+        if (/^(?:www\.)?(?:mediawiki|wikisource|wikidata)\.org$/.test(reqParams.domain)) {
+            extraParams.extdomain = reqParams.domain.replace(
+                /(www\.)?(mediawiki|wikisource|wikidata)/, 'm.$2'
+            );
+        } else {
+            extraParams.extdomain = reqParams.domain.replace(/^([^.]+)/, '$1.m');
+        }
+    }
+
+    const request = app.mw_tpl.expand({
+        request: { params: Object.assign(extraParams, reqParams) }
+    });
+
+    if (request.query) {
+        // puppeteer does not support setting the query object,
+        // so we need to add it manually to the URI
+        const query = Object.keys(request.query)
+            .map(item => `${item}=${encodeURIComponent(request.query[item])}`)
+            .join('&');
+        if (request.uri.includes('?')) {
+            request.uri = `${request.uri}&${query}`;
+        } else {
+            request.uri = `${request.uri}?${query}`;
+        }
+    }
+
+    return request;
+}
+
+/**
  * Utility function to build data object passed to the queue
  * @param {Object} req Express Request object
  * @return {{id: string, renderer: Object, uri: string, format: string}}
  */
 function buildRequestData(req) {
-    const parts = req.params.domain.split('.');
-    const isMobileRender = req.params.type && req.params.type === 'mobile';
-    const language = parts.shift();
-
-    const requestUrl = app.mw_tpl.expand({
-        request: {
-            params: {
-                language,
-                mobile: isMobileRender,
-                domain: parts.join('.'),
-                article: encodeURIComponent(req.params.title)
-            }
-        }
-    });
-
-    const id = `${uuid.TimeUuid.now().toString()}|${requestUrl.uri}`;
-    const renderer = new Renderer(app.conf.user_agent, isMobileRender);
+    const request = assembleRequest(req.params);
+    const id = `${uuid.TimeUuid.now().toString()}|${req.params.domain}|${req.params.title}`;
+    const renderer = new Renderer(app.conf.user_agent, req.params.type === 'mobile');
     return {
         id,
         renderer,
-        uri: requestUrl.uri,
+        uri: request.uri,
+        headers: request.headers,
         format: req.params.format
     };
 }
@@ -122,14 +151,13 @@ function buildRequestData(req) {
  * Returns PDF representation of the article
  */
 router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res) => {
-    const data = buildRequestData(req);
+    let data;
     const title = req.params.title;
     const encodedTitle = encodeURIComponent(title);
 
     app.metrics.increment(`request.type.${req.params.type}`);
     app.metrics.increment(`request.format.${req.params.format}`);
 
-    // this code blindly assumes that domain is in '{lang}.wikipedia.org` format
     apiUtil.restApiGet(app, req.params.domain, `page/title/${encodedTitle}`).then(() => {
         // we don't need to process the response, we're just expecting that article exists
         req.on('close', () => {
@@ -140,6 +168,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
             );
             app.queue.abort(data);
         });
+        data = buildRequestData(req);
         handlePDFJob(data, title, res);
     }, (err) => {
         if (err.status === 404) {

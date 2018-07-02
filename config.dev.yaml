@@ -60,13 +60,15 @@ services:
       #   - user-agent
       #   - x-request-id
       # the user agent to use when issuing requests
-      user_agent: Baha's Proton Renderer
+      user_agent: WMF Proton Renderer
       mw_req:
-        method: '{{request.method}}'
-        uri: "http://{{language}}{{if(mobile, '.m', '')}}.{{domain}}/w/index.php?title={+article}"
-        query: '{{ default(request.query, {}) }}'
-        headers: '{{request.headers}}'
-        body: '{{request.body}}'
+        method: get
+        uri: https://{{extdomain}}/w/index.php
+        query:
+          title: '{{request.params.title}}'
+        headers:
+          host: '{{request.params.domain}}'
+          x-subdomain: '{{if(request.params.mobile, "M", "")}}'
       restbase_req:
         method: '{{request.method}}'
         uri: https://{{domain}}/api/rest_v1/{+path}
