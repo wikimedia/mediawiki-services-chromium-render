@@ -136,6 +136,11 @@ function initApp(options) {
     if (process.env.CHROME_BIN) {
         app.conf.puppeteer_options.executablePath = process.env.CHROME_BIN;
     }
+    // Verify that executablePath is set and it points to an executable file
+    if (!app.conf.puppeteer_options.executablePath) {
+        throw new Error('The `puppetter_options.executablePath` config option has to be set');
+    }
+    fs.accessSync(app.conf.puppeteer_options.executablePath, fs.constants.X_OK);
 
     return BBPromise.resolve(app);
 
