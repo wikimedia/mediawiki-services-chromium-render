@@ -132,12 +132,13 @@ function assembleRequest(reqParams) {
 /**
  * Utility function to build data object passed to the queue
  * @param {Object} req Express Request object
+ * @param {Object} logger The Logger object
  * @return {{id: string, renderer: Object, uri: string, format: string}}
  */
-function buildRequestData(req) {
+function buildRequestData(req, logger) {
     const request = assembleRequest(req.params);
     const id = `${uuid.TimeUuid.now().toString()}|${req.params.domain}|${req.params.title}`;
-    const renderer = new Renderer(app.conf.user_agent, req.params.type === 'mobile');
+    const renderer = new Renderer(app.conf.user_agent, req.params.type === 'mobile', logger);
     return {
         id,
         renderer,
@@ -168,7 +169,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
             );
             app.queue.abort(data);
         });
-        data = buildRequestData(req);
+        data = buildRequestData(req, app.logger);
         handlePDFJob(data, title, res);
     }, (err) => {
         if (err.status === 404) {
