@@ -25,9 +25,11 @@ let app;
 function handleError(error, title, res) {
     let status;
     let details;
+
     switch (error) {
-        // FIX: e.queueBusy === 0 and Boolean(0) === false so the outer
-        // conditional prohibits this state.
+        case callbackErrors.abort:
+            // aborted render, no need to process the error
+            return res.end();
         case callbackErrors.queueBusy:
         case callbackErrors.queueFull:
             status = 503;
@@ -65,25 +67,13 @@ function handlePDFJob(data, title, res) {
             return;
         }
 
-        // Async Queue doesn't handle aborting jobs well. `pdf` can be undefined
-        // when user aborted the request that already started to render.
-        if (pdf) {
-            const headers = {
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': sUtil.getContentDisposition(title)
-            };
-            app.metrics.gauge(`request.pdf.size`, pdf.length);
-            res.writeHead(200, headers);
-            res.end(pdf, 'binary');
-        } else {
-            // no output just close the resource if it's not already closed (aborted)
-            try {
-                res.end();
-            } catch (err) {
-                // do nothing
-            }
-        }
-
+        const headers = {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': sUtil.getContentDisposition(title)
+        };
+        app.metrics.gauge(`request.pdf.size`, pdf.length);
+        res.writeHead(200, headers);
+        res.end(pdf, 'binary');
     }));
 }
 
