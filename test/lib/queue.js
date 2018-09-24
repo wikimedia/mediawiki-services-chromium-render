@@ -10,7 +10,7 @@ const puppeteerFlags = [
 ];
 const metrics = {
     increment: () => {},
-    timing: () => {},
+    endTiming: () => {},
     gauge: () => {}
 };
 

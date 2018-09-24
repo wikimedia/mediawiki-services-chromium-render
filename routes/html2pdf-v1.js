@@ -5,6 +5,7 @@ const sUtil = require('../lib/util');
 const uuid = require('cassandra-uuid');
 const apiUtil = require('../lib/api-util');
 const { Renderer } = require('../lib/renderer');
+const BBPromise = require('bluebird');
 
 /**
  * The main router object
@@ -22,7 +23,7 @@ let app;
  * @param {string} title Article title
  * @param {Object} res Express response resource
  */
-function handleError(error, title, res) {
+function sendErrorToClient(error, title, res) {
     let status;
     let details;
 
@@ -57,24 +58,20 @@ function handleError(error, title, res) {
 /**
  * Handle the PDF rendering job, registers new job in the queue and handles output
  * @param {Object} data result of buildRequestData() function call
- * @param {string} title Article title
- * @param {Object} res Express response object
+ * @return Promise
  */
-function handlePDFJob(data, title, res) {
-    app.queue.push(data, ((error, pdf) => {
-        if (error) {
-            handleError(error, title, res);
-            return;
-        }
-
-        const headers = {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': sUtil.getContentDisposition(title)
-        };
-        app.metrics.gauge(`request.pdf.size`, pdf.length);
-        res.writeHead(200, headers);
-        res.end(pdf, 'binary');
-    }));
+function handlePDFJob(data) {
+    // TODO this will go away when app.queue will return promise @see T204055
+    return new BBPromise((resolve, reject) => {
+        app.queue.push(data, ((err, pdf) => {
+            if (err) {
+                const error = new Error();
+                error.code = err;
+                return reject(error);
+            }
+            resolve(pdf);
+        }));
+    });
 }
 
 /**
@@ -142,42 +139,69 @@ function buildRequestData(req, logger) {
  * Returns PDF representation of the article
  */
 router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res) => {
-    let data;
     const title = req.params.title;
     const encodedTitle = encodeURIComponent(title);
-
     app.metrics.increment(`request.type.${req.params.type}`);
     app.metrics.increment(`request.format.${req.params.format}`);
+    const data = buildRequestData(req, app.logger);
 
-    apiUtil.restApiGet(app, req.params.domain, `page/title/${encodedTitle}`).then(() => {
+    return apiUtil.restApiGet(app, req.params.domain, `page/title/${encodedTitle}`).then(() => {
         // we don't need to process the response, we're just expecting that article exists
         req.on('close', () => {
             app.logger.log(
                 'debug/request',
-                `Connection closed by the client. ` +
-                `Will try and cancel the task ${data.id}.`
+                {
+                    msg: `Connection closed by the client. `,
+                    id: data.id
+                }
+
             );
             app.queue.abort(data);
         });
-        data = buildRequestData(req, app.logger);
-        handlePDFJob(data, title, res);
-    }, (err) => {
-        if (err.status === 404) {
-            app.logger.log(
-                'info/request',
-                `Restbase page/title/${encodedTitle} request returned ${err.status} code`
-            );
-            handleError(callbackErrors.pageNotFound, title, res);
-        } else {
+        return handlePDFJob(data, title);
+    }, (error) => {
+        const err = new Error(`Restbase page/title/${encodedTitle} request `
+            + ` returned ${error.status} code`);
+        if (error.status >= 500) {
             app.logger.log(
                 'error/request',
-                `Restbase page/title/${encodedTitle} request returned ${err.status} code`
+                {
+                    msg: `RESTBase error: ${error.message || error.detail}`,
+                    code: error.status,
+                    params: req.params,
+                    id: data.id
+                }
             );
-
-            handleError(callbackErrors.renderFailed, title, res);
+            err.code = callbackErrors.renderFailed;
+        } else if (error.status === 404) {
+            err.code = callbackErrors.pageNotFound;
+        } else {
+            err.code = callbackErrors.renderFailed;
+        }
+        throw err;
+    })
+    .then((pdf) => {
+        if (!pdf) {
+            const error = new Error(`Render process returned an empty PDF`);
+            error.code = callbackErrors.renderFailed;
+            throw error;
+        }
+        const headers = {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': sUtil.getContentDisposition(title)
+        };
+        app.metrics.gauge(`request.pdf.size`, pdf.length);
+        res.writeHead(200, headers);
+        res.end(pdf, 'binary');
+    })
+    .catch((error) => {
+        if (error && error.code) {
+            sendErrorToClient(error.code, title, res);
+        } else {
+            // fallback for any other error
+            sendErrorToClient(callbackErrors.renderFailed, title, res);
         }
     });
-
 });
 
 module.exports = function(appObj) {
