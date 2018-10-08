@@ -125,7 +125,13 @@ function assembleRequest(reqParams) {
 function buildRequestData(req, logger) {
     const request = assembleRequest(req.params);
     const id = `${uuid.TimeUuid.now().toString()}|${req.params.domain}|${req.params.title}`;
-    const renderer = new Renderer(app.conf.user_agent, req.params.type === 'mobile', logger);
+    const renderer = new Renderer(
+        app.conf.puppeteer_options,
+        app.conf.pdf_options,
+        app.conf.user_agent,
+        req.params.type === 'mobile',
+        logger
+    );
     return {
         id,
         renderer,
@@ -216,8 +222,6 @@ module.exports = function(appObj) {
             maxTaskCount: conf.max_render_queue_size || 3,
             healthLoggingInterval: conf.queue_health_logging_interval || 3600
         },
-        conf.puppeteer_options,
-        conf.pdf_options,
         app.logger,
         app.metrics
     );
