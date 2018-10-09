@@ -1,11 +1,14 @@
 'use strict';
 
-const { callbackErrors, Queue } = require('../lib/queue');
+const { Queue } = require('../lib/queue');
+const { QueueItem } = require('../lib/queueItem');
+const { bindQueueLoggerAndMetrics } = require('../lib/queueLogger');
+
+const errors = require('../lib/errors');
 const sUtil = require('../lib/util');
 const uuid = require('cassandra-uuid');
 const apiUtil = require('../lib/api-util');
 const { Renderer } = require('../lib/renderer');
-const BBPromise = require('bluebird');
 
 /**
  * The main router object
@@ -22,56 +25,58 @@ let app;
  * @param {Integer} error Error code, one of callbackErrors
  * @param {string} title Article title
  * @param {Object} res Express response resource
+ * @param {Object} logger Log object
+ * @param {Object} metrics metrics to
  */
-function sendErrorToClient(error, title, res) {
+function handleError(error, title, res, logger, metrics) {
     let status;
-    let details;
+    let detail;
+    if (error instanceof errors.NavigationError) {
+        switch (error.httpCode) {
+            case 404:
+                status = 404;
+                detail = `Article '${title}' not found`;
+                logger.log('info/render', {
+                    msg: 'Render failed. Page not found.',
+                    id: error.jobId
+                });
+                break;
+            default:
+                status = 500;
+                detail = 'Internal Server Error';
+                if (error.httpCode >= 500) {
+                    app.logger.log(
+                        'error/request',
+                        {
+                            msg: error.message || error.msg,
+                            code: error.httpCode,
+                            params: error.httpParams,
+                            id: error.jobId
+                        });
+                }
 
-    switch (error) {
-        case callbackErrors.abort:
-            // aborted render, no need to process the error
-            return res.end();
-        case callbackErrors.queueBusy:
-        case callbackErrors.queueFull:
-            status = 503;
-            details = 'Queue full. Please try again later';
-            // Pool manager will depool the service once it receives 5xx error
-            // 503 is an expected state, and we should re-pool this server after
-            // render_queue_timeout seconds  which means queue should be empty now
-            // (or picked to render, or rejected because of the timeout)
-            res.set('Retry-After', app.conf.render_queue_timeout || 60);
-            details = 'Queue full. Please try again later';
-            break;
-        case callbackErrors.pageNotFound:
-            status = 404;
-            details = `Article '${title}' not found`;
-            break;
-        default:
-            status = 500;
-            details = 'Internal Server Error';
+        }
+    } else if (error instanceof errors.QueueTimeout) {
+        status = 503;
+        // Pool manager will depool the service once it receives 5xx error
+        // 503 is an expected state, and we should re-pool this server after
+        // render_queue_timeout seconds  which means queue should be empty now
+        // (or picked to render, or rejected because of the timeout)
+        res.set('Retry-After', app.conf.render_queue_timeout || 60);
+        detail = 'Queue full. Please try again later';
+    } else {
+        app.logger.log(
+            'error/request',
+            {
+                msg: `Unexpected error: ${error}`,
+                trace: error.stack
+            });
+        status = 500;
+        detail = 'Internal Server Error';
     }
 
-    const errorObject = new sUtil.HTTPError({ status, details });
+    const errorObject = new sUtil.HTTPError({ status, detail });
     res.status(errorObject.status).send(errorObject);
-}
-
-/**
- * Handle the PDF rendering job, registers new job in the queue and handles output
- * @param {Object} data result of buildRequestData() function call
- * @return Promise
- */
-function handlePDFJob(data) {
-    // TODO this will go away when app.queue will return promise @see T204055
-    return new BBPromise((resolve, reject) => {
-        app.queue.push(data, ((err, pdf) => {
-            if (err) {
-                const error = new Error();
-                error.code = err;
-                return reject(error);
-            }
-            resolve(pdf);
-        }));
-    });
 }
 
 /**
@@ -120,9 +125,9 @@ function assembleRequest(reqParams) {
  * Utility function to build data object passed to the queue
  * @param {Object} req Express Request object
  * @param {Object} logger The Logger object
- * @return {{id: string, renderer: Object, uri: string, format: string}}
+ * @return {QueueItem}
  */
-function buildRequestData(req, logger) {
+function buildQueueItem(req, logger) {
     const request = assembleRequest(req.params);
     const id = `${uuid.TimeUuid.now().toString()}|${req.params.domain}|${req.params.title}`;
     const renderer = new Renderer(
@@ -132,13 +137,14 @@ function buildRequestData(req, logger) {
         req.params.type === 'mobile',
         logger
     );
-    return {
+    const data = {
         id,
         renderer,
         uri: request.uri,
         headers: request.headers,
         format: req.params.format
     };
+    return new QueueItem(data);
 }
 
 /**
@@ -149,48 +155,37 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
     const encodedTitle = encodeURIComponent(title);
     app.metrics.increment(`request.type.${req.params.type}`);
     app.metrics.increment(`request.format.${req.params.format}`);
-    const data = buildRequestData(req, app.logger);
+    const queueItem = buildQueueItem(req, app.logger);
 
     return apiUtil.restApiGet(app, req.params.domain, `page/title/${encodedTitle}`).then(() => {
         // we don't need to process the response, we're just expecting that article exists
+        const promise = app.queue.push(queueItem);
         req.on('close', () => {
             app.logger.log(
                 'debug/request',
                 {
                     msg: `Connection closed by the client. `,
-                    id: data.id
+                    id: queueItem.jobId
                 }
 
             );
-            app.queue.abort(data);
+            promise.cancel();
         });
-        return handlePDFJob(data, title);
+        return promise;
     }, (error) => {
-        const err = new Error(`Restbase page/title/${encodedTitle} request `
-            + ` returned ${error.status} code`);
-        if (error.status >= 500) {
-            app.logger.log(
-                'error/request',
-                {
-                    msg: `RESTBase error: ${error.message || error.detail}`,
-                    code: error.status,
-                    params: req.params,
-                    id: data.id
-                }
+        if (error.status) {
+            throw new errors.NavigationError(
+                error.status,
+                `RESTBASE error: ${error.message || error.detail}`,
+                queueItem.jobId,
+                req.params
             );
-            err.code = callbackErrors.renderFailed;
-        } else if (error.status === 404) {
-            err.code = callbackErrors.pageNotFound;
-        } else {
-            err.code = callbackErrors.renderFailed;
         }
-        throw err;
+        throw error;
     })
     .then((pdf) => {
         if (!pdf) {
-            const error = new Error(`Render process returned an empty PDF`);
-            error.code = callbackErrors.renderFailed;
-            throw error;
+            throw new errors.PuppeteerMalformedResponseError();
         }
         const headers = {
             'Content-Type': 'application/pdf',
@@ -201,12 +196,18 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
         res.end(pdf, 'binary');
     })
     .catch((error) => {
-        if (error && error.code) {
-            sendErrorToClient(error.code, title, res);
-        } else {
-            // fallback for any other error
-            sendErrorToClient(callbackErrors.renderFailed, title, res);
+        if (error instanceof errors.ProcessingCancelled) {
+            return res.end();
+        } else if (error instanceof errors.NavigationError) {
+            // NavigationErrors from renderer will not have jobId nor params, inject those
+            error = new errors.NavigationError(
+                error.httpCode,
+                error.message,
+                queueItem.jobId,
+                req.params
+            );
         }
+        handleError(error, title, res, app.logger, app.metrics);
     });
 });
 
@@ -217,15 +218,12 @@ module.exports = function(appObj) {
     app.queue = new Queue(
         {
             concurrency: conf.render_concurrency || 1,
-            queueTimeout: conf.render_queue_timeout || 60,
-            executionTimeout: conf.render_execution_timeout || 90,
-            maxTaskCount: conf.max_render_queue_size || 3,
-            healthLoggingInterval: conf.queue_health_logging_interval || 3600
-        },
-        app.logger,
-        app.metrics
+            queueTimeout: (conf.render_queue_timeout || 60) * 1000,
+            executionTimeout: (conf.render_execution_timeout || 90) * 1000,
+            maxTaskCount: conf.max_render_queue_size || 3
+        }
     );
-
+    bindQueueLoggerAndMetrics(app.queue, app.logger, app.metrics);
     // the returned object mounts the routes on
     // /{domain}/vX/mount/path
     return {

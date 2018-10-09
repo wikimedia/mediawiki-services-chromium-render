@@ -8,6 +8,9 @@ const assert = require('./assert');
 const yaml = require('js-yaml');
 const extend = require('extend');
 
+BBPromise.config({
+    cancellation: true
+});
 
 // set up the configuration
 let config = {

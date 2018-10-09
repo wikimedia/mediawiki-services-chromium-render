@@ -3,12 +3,13 @@ MediaWiki Service for rendering wiki pages in PDF using headless chromium
 
 ## Local set up and development
 1. Install dependencies with `npm install`
-2. Start the service with `npm start`
-3. Use the service by visiting the following pages in a web browser:
+2. Set the `APP_ENABLE_CANCELLABLE_PROMISES` environment variable to `true`, otherwise application will fail.
+3. Start the service with `npm start`.
+4. Use the service by visiting the following pages in a web browser:
     * Legal size, easy to read on mobile devices: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/legal/mobile
     * A4: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/a4/desktop
-4. Perform tests with `npm test`
-5. Identify test coverage with `npm run coverage`
+5. Perform tests with `npm test`
+6. Identify test coverage with `npm run coverage`
 
 ## Requests
 [server.js](server.js) is the service entry point. It immediately invokes
@@ -19,19 +20,24 @@ which matches it to a route by testing each path-to-regexp expression specified
 by each route. Finally, the route responds.
 
 The PDF route is contained in [html2pdf-v1.js](routes/html2pdf-v1.js). Every PDF
-request is attempted to be insertion into the queue with a callback. When the
-request completes either successfully because a PDF was rendered, or
+request verifies that the requested article exists and then it inserted to the queue.
+When the request completes either successfully because a PDF was rendered, or
 unsuccessfully because the queue was full, a timeout occurred, or an error was
-encountered, the callback is invoked and a response is returned to Express and
+encountered, the promise is rejected and a response is returned to Express and
 then served to the client.
 
-The queue itself is mostly generic. It's a thin wrapper on top of async/queue
-that wires up logging, invokes the renderer, and also exposes a few convenience
-methods for managing state and threading.
+The queue itself is a bespoke solution that:
+ - returns a promise for every job
+ - allows queued jobs to timeout
+ - allows in-progress jobs to timeout
+ - allows to cancel jobs
+There is no promise library that provides all those features, because of that
+the library has to implement it's own queue system.
 
 The renderer is the interface into a literal Chromium browser instance. It
 launches Chromium, navigates to the webpage like a desktop user would, requests
-a PDF for the visited page, and finally terminates the browser.
+a PDF for the visited page, and finally terminates the browser. Pages are rendered
+in non-javascript mode to disable features like lazy-lading images.
 
 Service can render mobile-friendly PDFs. To enable mobile friendly mode pass
 `mobile` as last parameter. Chromium-renderer will fetch the article page

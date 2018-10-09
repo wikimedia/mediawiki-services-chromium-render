@@ -1,6 +1,5 @@
 'use strict';
 
-
 const http = require('http');
 const BBPromise = require('bluebird');
 const express = require('express');
@@ -13,14 +12,12 @@ const packageInfo = require('./package.json');
 const yaml = require('js-yaml');
 const addShutdown = require('http-shutdown');
 
-
 /**
  * Creates an express app and initialises it
  * @param {Object} options the options to initialise the app with
  * @return {bluebird} the promise resolving to the app object
  */
 function initApp(options) {
-
     // the main application object
     const app = express();
 
@@ -131,6 +128,12 @@ function initApp(options) {
     // Puppeteer options
     if (!app.conf.puppeteer_options) {
         app.conf.puppeteer_options = {};
+    }
+
+    // Verify the APP_ENABLE_CANCELLABLE_PROMISES env variable
+    if (!process.env.APP_ENABLE_CANCELLABLE_PROMISES) {
+        throw new Error('The `APP_ENABLE_CANCELLABLE_PROMISES` environment variable is' +
+            ' required to be set to `true` in order to run this service');
     }
 
     // Verify that executablePath is set and it points to an executable file

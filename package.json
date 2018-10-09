@@ -4,11 +4,11 @@
   "description": "A service for converting HTML to PDF using headless Chromium",
   "main": "./app.js",
   "scripts": {
-    "start": "service-runner",
-    "test": "PREQ_CONNECT_TIMEOUT=15 mocha && nsp check",
-    "docker-start": "service-runner docker-start",
-    "docker-test": "service-runner docker-test",
-    "test-build": "service-runner docker-test && service-runner build --deploy-repo --force",
+    "start": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner",
+    "test": "APP_ENABLE_CANCELLABLE_PROMISES=true PREQ_CONNECT_TIMEOUT=15 mocha && nsp check",
+    "docker-start": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-start",
+    "docker-test": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test",
+    "test-build": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test && service-runner build --deploy-repo --force",
     "coverage": "istanbul cover _mocha -- -R spec"
   },
   "repository": {
@@ -29,8 +29,7 @@
   },
   "homepage": "https://github.com/wikimedia/mediawiki-services-chromium-render",
   "dependencies": {
-    "async": "^2.6.0",
-    "bluebird": "^3.5.1",
+    "bluebird": "^3.5.3",
     "body-parser": "^1.18.2",
     "bunyan": "^1.8.12",
     "cassandra-uuid": "^0.0.2",
@@ -41,7 +40,7 @@
     "js-yaml": "^3.10.0",
     "preq": "^0.5.6",
     "puppeteer-core": "1.9.0",
-    "service-runner": "^2.6.1",
+    "service-runner": "^2.6.7",
     "swagger-router": "^0.7.1",
     "swagger-ui": "git+https://github.com/wikimedia/swagger-ui.git#master"
   },
@@ -64,8 +63,9 @@
     "target": "debian:stretch",
     "node": "6.11.1",
     "env": {
-      "PUPPETEER_EXECUTABLE_PATH": "/usr/bin/chromium"
-      },
+      "PUPPETEER_EXECUTABLE_PATH": "/usr/bin/chromium",
+      "APP_ENABLE_CANCELLABLE_PROMISES": true
+    },
     "dependencies": {
       "debian": [
         "chromium",

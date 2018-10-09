@@ -112,5 +112,3 @@ services:
       render_execution_timeout: 90
       # maximum allowed number of pending jobs
       max_render_queue_size: 3
-      # logging interval of the queue health status (in seconds)
-      queue_health_logging_interval: 3600
