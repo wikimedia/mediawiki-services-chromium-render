@@ -132,12 +132,22 @@ function initApp(options) {
     if (!app.conf.puppeteer_options) {
         app.conf.puppeteer_options = {};
     }
-    // If CHROME_BIN is defined, tell puppeteer to use it
-    if (process.env.CHROME_BIN) {
+
+    // Verify that executablePath is set and it points to an executable file
+    // Looks like Puppeteer-core doesn't respect the PUPPETEER_* variables, so we need
+    // to handle it by ourselves
+    // @see https://github.com/GoogleChrome/puppeteer/blob/v1.8.0/lib/Launcher.js#L289
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        app.conf.puppeteer_options.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    } else if (process.env.CHROME_BIN) {
         app.conf.puppeteer_options.executablePath = process.env.CHROME_BIN;
     }
-
-    return BBPromise.resolve(app);
+    if (!app.conf.puppeteer_options.executablePath) {
+        throw new Error('The `puppeteer_options.executablePath` config option or ' +
+            'PUPPETEER_EXECUTABLE_PATH environment variable has to be set');
+    }
+    return fs.accessAsync(app.conf.puppeteer_options.executablePath, fs.constants.X_OK)
+    .thenReturn(app);
 
 }
 

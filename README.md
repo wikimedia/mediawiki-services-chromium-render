@@ -65,10 +65,8 @@ The following options are supported.
 - `timeout`: The maximum number of **milliseconds** to wait for Chromium to
   launch. Durations exceeding `render_execution_timeout` are limited. Defaults
   to `30000`.
-- `executablePath`: The Chromium executable path to use. This option is most
-  relevant when skipping Puppeteer's bundled Chromium install via the
-  `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD` [Puppeteer environment variable]. The
-  `CHROME_BIN` environment variable overrides this configuration.
+- `executablePath`: The Chromium executable path to use. This config variable can be overridden by the
+  `PUPPETEER_EXECUTABLE_PATH` environment variable
 
 Additional documentation is available in the [Puppeteer docs].
 
