@@ -26,9 +26,8 @@ let app;
  * @param {string} title Article title
  * @param {Object} res Express response resource
  * @param {Object} logger Log object
- * @param {Object} metrics metrics to
  */
-function handleError(error, title, res, logger, metrics) {
+function handleError(error, title, res, logger) {
     let status;
     let detail;
     if (error instanceof errors.NavigationError) {
@@ -56,15 +55,27 @@ function handleError(error, title, res, logger, metrics) {
                 }
 
         }
-    } else if (error instanceof errors.QueueTimeout) {
+    } else if (error instanceof errors.ProcessingCancelled) {
+        // client aborted request, we don't need to process that
+        return res.end();
+    } else if (error instanceof errors.QueueFull || error instanceof errors.QueueTimeout) {
         status = 503;
+        // queue is busy, the waiting task just got rejected (didn't get to rendering phase)
+        // we need to allow this queue to finish processing all tasks first before handling new job
         // Pool manager will depool the service once it receives 5xx error
         // 503 is an expected state, and we should re-pool this server after
         // render_queue_timeout seconds  which means queue should be empty now
         // (or picked to render, or rejected because of the timeout)
         res.set('Retry-After', app.conf.render_queue_timeout || 60);
         detail = 'Queue full. Please try again later';
+    } else if (error instanceof errors.JobTimeout) {
+        status = 503;
+        // Very similar situation as previously, started task timeouted, it could be a big
+        // render or just a service overload, We don't need to stop processing queue as there is
+        // already one spot in the queue rendering queue.
+        detail = 'Queue full. Please try again later';
     } else {
+        // Any other error - log and fail
         app.logger.log(
             'error/request',
             {
@@ -196,9 +207,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
         res.end(pdf, 'binary');
     })
     .catch((error) => {
-        if (error instanceof errors.ProcessingCancelled) {
-            return res.end();
-        } else if (error instanceof errors.NavigationError) {
+        if (error instanceof errors.NavigationError) {
             // NavigationErrors from renderer will not have jobId nor params, inject those
             error = new errors.NavigationError(
                 error.httpCode,
@@ -207,7 +216,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
                 req.params
             );
         }
-        handleError(error, title, res, app.logger, app.metrics);
+        handleError(error, title, res, app.logger);
     });
 });
 
