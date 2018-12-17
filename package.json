@@ -5,7 +5,7 @@
   "main": "./app.js",
   "scripts": {
     "start": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner",
-    "test": "APP_ENABLE_CANCELLABLE_PROMISES=true PREQ_CONNECT_TIMEOUT=15 mocha && nsp check",
+    "test": "APP_ENABLE_CANCELLABLE_PROMISES=true PREQ_CONNECT_TIMEOUT=15 mocha",
     "docker-start": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-start",
     "docker-test": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test",
     "test-build": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test && service-runner build --deploy-repo --force",
@@ -56,8 +56,7 @@
     "istanbul": "^0.4.5",
     "mocha": "^4.0.1",
     "mocha-eslint": "^4.1.0",
-    "mocha-lcov-reporter": "^1.3.0",
-    "nsp": "^2.8.1"
+    "mocha-lcov-reporter": "^1.3.0"
   },
   "deploy": {
     "target": "debian:stretch",
