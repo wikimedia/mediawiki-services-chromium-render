@@ -9,7 +9,7 @@
     "docker-start": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-start",
     "docker-test": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test",
     "test-build": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test && service-runner build --deploy-repo --force",
-    "coverage": "istanbul cover _mocha -- -R spec"
+    "coverage": "APP_ENABLE_CANCELLABLE_PROMISES=true istanbul cover _mocha -- -R spec"
   },
   "repository": {
     "type": "git",
