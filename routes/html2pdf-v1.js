@@ -9,6 +9,7 @@ const sUtil = require('../lib/util');
 const uuid = require('cassandra-uuid');
 const apiUtil = require('../lib/api-util');
 const { Renderer } = require('../lib/renderer');
+const BBPromise = require('bluebird');
 
 /**
  * The main router object
@@ -55,6 +56,7 @@ function handleError(error, title, res, logger) {
                 }
 
         }
+
     } else if (error instanceof errors.ProcessingCancelled) {
         // client aborted request, we don't need to process that
         return res.end();
@@ -167,6 +169,21 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
     app.metrics.increment(`request.type.${req.params.type}`);
     app.metrics.increment(`request.format.${req.params.format}`);
     const queueItem = buildQueueItem(req, app.logger);
+
+    if (app.queue.isQueueFull()) {
+        handleError(new errors.QueueFull(), title, res, app.logger);
+        app.logger.log(
+            'warn/queue',
+            {
+                msg: 'Queue is full, rejecting the request.',
+                id: queueItem.jobId,
+                waitingCount: app.queue.countJobsWaiting(),
+                inProgressCount: app.queue.countJobsInProcessing()
+            }
+        );
+        app.metrics.increment('queue.full');
+        return BBPromise.resolve();
+    }
 
     return apiUtil.restApiGet(app, req.params.domain, `page/title/${encodedTitle}`).then(() => {
         // we don't need to process the response, we're just expecting that article exists
