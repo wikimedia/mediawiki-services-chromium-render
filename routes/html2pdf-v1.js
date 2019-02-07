@@ -146,6 +146,7 @@ function buildQueueItem(req, logger) {
     const renderer = new Renderer(
         app.conf.puppeteer_options,
         app.conf.pdf_options,
+        new RegExp(app.conf.host_blacklist ? `^(?:${app.conf.host_blacklist})$` : '(?!)', 'i'),
         app.conf.user_agent,
         req.params.type === 'mobile',
         logger

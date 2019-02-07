@@ -30,6 +30,7 @@ config.conf.logging = {
     level: 'trace',
     stream: logStream()
 };
+config.service.conf.host_blacklist = null;
 
 // make a deep copy of it for later reference
 const origConfig = extend(true, {}, config);
