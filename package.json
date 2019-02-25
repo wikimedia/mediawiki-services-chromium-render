@@ -9,7 +9,7 @@
     "docker-start": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-start",
     "docker-test": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test",
     "test-build": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test && service-runner build --deploy-repo --force",
-    "coverage": "APP_ENABLE_CANCELLABLE_PROMISES=true istanbul cover _mocha -- -R spec"
+    "coverage": "APP_ENABLE_CANCELLABLE_PROMISES=true nyc --reporter=lcov _mocha"
   },
   "repository": {
     "type": "git",
@@ -53,10 +53,10 @@
     "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-mocha": "^4.11.0",
     "extend": "^3.0.1",
-    "istanbul": "^0.4.5",
     "mocha": "^4.0.1",
     "mocha-eslint": "^4.1.0",
-    "mocha-lcov-reporter": "^1.3.0"
+    "mocha-lcov-reporter": "^1.3.0",
+    "nyc": "13.3.0"
   },
   "deploy": {
     "target": "debian:stretch",
