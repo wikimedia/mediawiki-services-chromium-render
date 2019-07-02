@@ -124,7 +124,7 @@ function assembleRequest(reqParams) {
         const query = Object.keys(request.query)
             .map(item => `${item}=${encodeURIComponent(request.query[item])}`)
             .join('&');
-        if (request.uri.includes('?')) {
+        if (/\?/.test(request.uri)) {
             request.uri = `${request.uri}&${query}`;
         } else {
             request.uri = `${request.uri}?${query}`;
