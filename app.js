@@ -77,8 +77,8 @@ function initApp(options) {
             app.conf.spec = {};
         }
     }
-    if (!app.conf.spec.swagger) {
-        app.conf.spec.swagger = '2.0';
+    if (!app.conf.spec.openapi) {
+        app.conf.spec.openapi = '3.0.0';
     }
     if (!app.conf.spec.info) {
         app.conf.spec.info = {
@@ -247,6 +247,8 @@ function createServer(app) {
  * options and the logger- and metrics-reporting objects from
  * service-runner and starts an HTTP server, attaching the application
  * object to it.
+ * @param {Object} options the options to initialise the app with
+ * @return {bluebird} HTTP server
  */
 module.exports = function(options) {
 
