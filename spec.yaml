@@ -1,4 +1,4 @@
-openapi: 3.0.0
+swagger: '2.0'
 info:
   version: 0.4.0
   title: MediaWiki PDF Render Service
@@ -19,110 +19,75 @@ paths:
       tags:
         - Root
       description: Gets robots.txt
-      responses:
-        200:
-          $ref: '#/components/responses/success'
-        default:
-          $ref: "#/components/responses/problem"
-      x-monitor: false
-
-  /:
-    get:
-      tags:
-        - Root
-      description: The root service end-point
-      responses:
-        200:
-          $ref: '#/components/responses/success'
-        default:
-          $ref: "#/components/responses/problem"
       x-amples:
-        - summary: spec from root
-          value:
-            request:
-              query:
-                spec: true
-            response:
-              status: 200
-
-  # from routes/info.js
+        - title: robots.txt check
+          request: {}
+          response:
+            status: 200
+            headers:
+              user-agent: '*'
+              disallow: '/'
   /_info:
     get:
       tags:
-        - Root
-      description: Gets information about the service.
-      responses:
-        200:
-          $ref: '#/components/responses/success'
-        default:
-          $ref: "#/components/responses/problem"
+        - Service information
+      description: Gets information about the service
+      produces:
+        - application/json
       x-amples:
-        - summary: retrieve service info
-          value:
-            request: {}
-            response:
-              status: 200
-              headers:
-                content-type: application/json
-              body:
-                name: /.+/
-                description: /.+/
-                version: /.+/
-                home: /.+/
+        - title: retrieve service info
+          request: {}
+          response:
+            status: 200
+            headers:
+              content-type: application/json
+            body:
+              name: /.+/
+              description: /.+/
+              version: /.+/
+              home: /.+/
   /_info/name:
     get:
       tags:
         - Service information
       description: Gets the name of the service
-      responses:
-        200:
-          $ref: '#/components/responses/success'
-        default:
-          $ref: "#/components/responses/problem"
+      produces:
+        - application/json
       x-amples:
-        - summary: retrieve service name
-          value:
-            request: {}
-            response:
-              status: 200
-              headers:
-                content-type: application/json
-              body:
-                name: /.+/
+        - title: retrieve service name
+          request: {}
+          response:
+            status: 200
+            headers:
+              content-type: application/json
+            body:
+              name: /.+/
   /_info/version:
     get:
       tags:
         - Service information
       description: Gets the running version of the service
-      responses:
-        200:
-          $ref: '#/components/responses/success'
-        default:
-          $ref: "#/components/responses/problem"
+      produces:
+        - application/json
       x-amples:
-        - summary: retrieve service version
-          value:
-            request: {}
-            response:
-              status: 200
-              headers:
-                content-type: application/json
-              body:
-                version: /.+/
+        - title: retrieve service version
+          request: {}
+          response:
+            status: 200
+            headers:
+              content-type: application/json
+            body:
+              version: /.+/
   /_info/home:
     get:
       tags:
         - Service information
       description: Redirects to the home page
-      responses:
-        301:
-          description: Redirects to the home page
       x-amples:
-        - summary: redirect to the home page
-          value:
-            request: {}
-            response:
-              status: 301
+        - title: redirect to the home page
+          request: {}
+          response:
+            status: 301
 
   /{domain}/v1/pdf/{title}/{format}/{type}:
     get:
@@ -132,21 +97,18 @@ paths:
       parameters:
         - in: path
           name: domain
-          schema:
-            type: string
+          type: string
           required: true
           description: 'Wikipedia domain including language subdomain - example: en.wikipedia.org'
         - in: path
           name: title
-          schema:
-            type: string
+          type: string
           required: true
           description: Title of the article we want to generate PDF for
         - in: path
           name: format
-          schema:
-            type: string
-            enum: ['a4', 'letter', 'legal']
+          type: string
+          enum: ['a4', 'letter', 'legal']
           required: true
           description: PDF format
         - in: path
@@ -154,128 +116,90 @@ paths:
           schema:
             type: string
             enum: ['mobile', 'desktop']
-            default: desktop
+          default: desktop
           description: PDF type - `mobile` (optimized for reading on mobile devices) or `desktop` (regular PDF). `desktop` is the default render mode and it will used if param `type` is not passed
+      produces:
+        - application/pdf
+        - application/json
       responses:
         200:
           description: A PDF was rendered successfully
-          content:
-            application/pdf:
-              schema:
-                type: file
+          schema:
+            type: file
         404:
           description: The specified article was not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
+          schema:
+            $ref: "#/definitions/HTTPError"
         500:
           description: A response is unavailable because server encountered an internal error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
+          schema:
+            $ref: "#/definitions/HTTPError"
         503:
           description: A response is unavailable because service queue is busy or full
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HTTPError"
-      x-amples:
-        - summary: Print the Foo page from en.wp.org in letter format
-          value:
-            request:
-              params:
-                title: Foo
-                format: letter
-                type: desktop
-            response:
-              status: 200
-              headers:
-                content-type: application/pdf
-                content-disposition: download; filename="Foo.pdf"; filename*=UTF-8''Foo.pdf
-        - summary: Print the Bar page from en.wp.org in A4 format using optimized for reading on mobile devices
-          value:
-            request:
-              params:
-                title: Bar
-                format: a4
-                type: mobile
-            response:
-              status: 200
-              headers:
-                content-type: application/pdf
-                content-disposition: download; filename="Bar.pdf"; filename*=UTF-8''Bar.pdf
-        - summary: Respond file not found for a nonexistent title
-          value:
-            request:
-              params:
-                title: Nonexistent_title
-                format: letter
-            response:
-              status: 404
-              headers:
-                content-type: application/json
-              schema:
-                type: object
-                properties:
-                  name: HTTPError
-                  status: 404
-                  message: '404'
-                  details: Article 'Nonexistent_title' not found
-        - summary: Respond bad request for an unsupported format
-          value:
-            request: {}
-            response:
-              status: 404 # FIX: this should return a 400. See T186127.
-              headers:
-                content-type: text/html # FIX: use application/json. See T186127.
-
-components:
-  responses:
-    problem:
-      description: Error
-      content:
-        application/problem+json:
           schema:
-            $ref: '#/components/schemas/problem'
-    success:
-      description: Success
-  schemas:
-    HTTPError:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Error type, usually HTTPError
-        status:
-          type: integer
-          description: HTTP Error code
-        message:
-          type: string
-          description: Error type, usually error code
-        details:
-          type: string
-          description: Error details
-      required:
-        - name
-        - status
-        - message
-    # A https://tools.ietf.org/html/draft-nottingham-http-problem
-    problem:
-      required:
-        - type
-      properties:
-        status:
-          type: integer
-        type:
-          type: string
-        title:
-          type: string
-        detail:
-          type: string
-        method:
-          type: string
-        uri:
-          type: string
-
+            $ref: "#/definitions/HTTPError"
+      x-amples:
+        - title: Print the Foo page from en.wp.org in letter format
+          request:
+            params:
+              title: Foo
+              format: letter
+              type: desktop
+          response:
+            status: 200
+            headers:
+              content-type: application/pdf
+              content-disposition: download; filename="Foo.pdf"; filename*=UTF-8''Foo.pdf
+        - title: Print the Bar page from en.wp.org in A4 format using optimized for reading on mobile devices
+          request:
+            params:
+              title: Bar
+              format: a4
+              type: mobile
+          response:
+            status: 200
+            headers:
+              content-type: application/pdf
+              content-disposition: download; filename="Bar.pdf"; filename*=UTF-8''Bar.pdf
+        - title: Respond file not found for a nonexistent title
+          request:
+            params:
+              title: Nonexistent_title
+              format: letter
+          response:
+            status: 404
+            headers:
+              content-type: application/json
+            schema:
+              type: object
+              properties:
+                name: HTTPError
+                status: 404
+                message: '404'
+                details: Article 'Nonexistent_title' not found
+        - title: Respond bad request for an unsupported format
+          request: {}
+          response:
+            status: 404 # FIX: this should return a 400. See T186127.
+            headers:
+              content-type: text/html # FIX: use application/json. See T186127.
+definitions:
+  HTTPError:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Error type, usually HTTPError
+      status:
+        type: integer
+        description: HTTP Error code
+      message:
+        type: string
+        description: Error type, usually error code
+      details:
+        type: string
+        description: Error details
+    required:
+      - name
+      - status
+      - message
