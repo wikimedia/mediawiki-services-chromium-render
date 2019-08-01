@@ -60,7 +60,7 @@
   },
   "deploy": {
     "target": "debian:stretch",
-    "node": "6.11.1",
+    "node": "10.15.2",
     "env": {
       "PUPPETEER_EXECUTABLE_PATH": "/usr/bin/chromium",
       "APP_ENABLE_CANCELLABLE_PROMISES": true
