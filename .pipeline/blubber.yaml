@@ -9,7 +9,7 @@ variants:
   build:
     base: docker-registry.wikimedia.org/nodejs-devel
     copies: [local]
-    apt: { packages: [git, python-pkgconfig, build-essential] }
+    apt: { packages: [git, python-pkgconfig, build-essential, chromium] }
     node: { requirements: [package.json]}
     runs: { environment: { LINK: g++ } }
   development:
