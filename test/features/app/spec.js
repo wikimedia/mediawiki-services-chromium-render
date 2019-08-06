@@ -1,12 +1,14 @@
 'use strict';
 
+const preq                   = require('preq');
+const assert                 = require('../../utils/assert.js');
+const server                 = require('../../utils/server.js');
+const URI                    = require('swagger-router').URI;
+const yaml                   = require('js-yaml');
+const fs                     = require('fs');
+const OpenAPISchemaValidator = require('openapi-schema-validator').default;
 
-const preq   = require('preq');
-const assert = require('../../utils/assert.js');
-const server = require('../../utils/server.js');
-const URI    = require('swagger-router').URI;
-const yaml   = require('js-yaml');
-const fs     = require('fs');
+const validator = new OpenAPISchemaValidator({ version: 3 });
 
 if (!server.stopHookAdded) {
     server.stopHookAdded = true;
@@ -49,15 +51,15 @@ function validateExamples(pathStr, defParams, mSpec) {
     }
 
     mSpec.forEach((ex, idx) => {
-        if (!ex.title) {
-            throw new Error(`Route ${pathStr}, example ${idx}: title missing!`);
+        if (!ex.summary) {
+            throw new Error(`Route ${pathStr}, example ${idx}: summary missing!`);
         }
-        ex.request = ex.request || {};
+        ex.value.request = ex.value.request || {};
         try {
-            uri.expand(Object.assign({}, defParams, ex.request.params || {}));
+            uri.expand(Object.assign({}, defParams, ex.value.request.params || {}));
         } catch (e) {
             throw new Error(
-                `Route ${pathStr}, example ${idx} (${ex.title}): missing parameter: ${e.message}`
+                `Route ${pathStr}, example ${idx} (${ex.summary}): missing parameter: ${e.message}`
             );
         }
     });
@@ -66,11 +68,10 @@ function validateExamples(pathStr, defParams, mSpec) {
 
 }
 
-
-function constructTestCase(title, path, method, request, response) {
+function constructTestCase(summary, path, method, request, response) {
 
     return {
-        title,
+        summary,
         request: {
             uri: server.config.uri + (path[0] === '/' ? path.substr(1) : path),
             method,
@@ -111,13 +112,17 @@ function constructTests(paths, defParams) {
                 return;
             }
             p['x-amples'].forEach((ex) => {
-                ex.request = ex.request || {};
+                ex.value.request = ex.value.request || {};
                 ret.push(constructTestCase(
-                    ex.title,
-                    uri.toString({ params: Object.assign({}, defParams, ex.request.params || {}) }),
+                    ex.summary,
+                    uri.toString({
+                        params: Object.assign({},
+                            defParams,
+                            ex.value.request.params || {})
+                    }),
                     method,
-                    ex.request,
-                    ex.response || {}
+                    ex.value.request,
+                    ex.value.response || {}
                 ));
             });
         });
@@ -229,7 +234,7 @@ function validateTestResponse(testCase, res) {
 describe('Swagger spec', function() {
 
     // the variable holding the spec
-    let spec = staticSpecLoad();
+    const spec = staticSpecLoad();
     // default params, if given
     let defParams = spec['x-default-params'] || {};
 
@@ -245,7 +250,8 @@ describe('Swagger spec', function() {
             assert.status(200);
             assert.contentType(res, 'application/json');
             assert.notDeepEqual(res.body, undefined, 'No body received!');
-            spec = res.body;
+            assert.deepEqual({ errors: [] }, validator.validate(res.body),
+                'Spec must have no validation errors');
         });
     });
 
@@ -254,7 +260,7 @@ describe('Swagger spec', function() {
             defParams = spec['x-default-params'];
         }
         // check the high-level attributes
-        ['info', 'swagger', 'paths'].forEach((prop) => {
+        ['info', 'openapi', 'paths'].forEach((prop) => {
             assert.deepEqual(!!spec[prop], true, `No ${prop} field present!`);
         });
         // no paths - no love
@@ -277,7 +283,7 @@ describe('Swagger spec', function() {
     describe('routes', () => {
 
         constructTests(spec.paths, defParams).forEach((testCase) => {
-            it(testCase.title, () => {
+            it(testCase.summary, () => {
                 return preq(testCase.request)
                 .then((res) => {
                     validateTestResponse(testCase, res);

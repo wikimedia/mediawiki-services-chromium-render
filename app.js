@@ -14,8 +14,8 @@ const addShutdown = require('http-shutdown');
 
 /**
  * Creates an express app and initialises it
- * @param {Object} options the options to initialise the app with
- * @return {bluebird} the promise resolving to the app object
+ * @param {!Object} options the options to initialise the app with
+ * @return {!Object} the promise resolving to the app object
  */
 function initApp(options) {
     // the main application object
@@ -77,8 +77,8 @@ function initApp(options) {
             app.conf.spec = {};
         }
     }
-    if (!app.conf.spec.swagger) {
-        app.conf.spec.swagger = '2.0';
+    if (!app.conf.spec.openapi) {
+        app.conf.spec.openapi = '3.0.1';
     }
     if (!app.conf.spec.info) {
         app.conf.spec.info = {
@@ -157,8 +157,8 @@ function initApp(options) {
 
 /**
  * Loads all routes declared in routes/ into the app
- * @param {Application} app the application object to load routes into
- * @return {bluebird} a promise resolving to the app object
+ * @param {!Application} app the application object to load routes into
+ * @return {!Object} a promise resolving to the app object
  */
 function loadRoutes(app) {
 
@@ -209,8 +209,8 @@ function loadRoutes(app) {
 
 /**
  * Creates and start the service's web server
- * @param {Application} app the app object to use in the service
- * @return {bluebird} a promise creating the web server
+ * @param {!Application} app the app object to use in the service
+ * @return {!Object} a promise creating the web server
  */
 function createServer(app) {
 
@@ -247,6 +247,8 @@ function createServer(app) {
  * options and the logger- and metrics-reporting objects from
  * service-runner and starts an HTTP server, attaching the application
  * object to it.
+ * @param {!Object} options the options to initialise the app with
+ * @return {!Object} HTTP server
  */
 module.exports = function(options) {
 

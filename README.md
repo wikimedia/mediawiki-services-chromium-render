@@ -11,6 +11,12 @@ MediaWiki Service for rendering wiki pages in PDF using headless chromium
 5. Perform tests with `npm test`
 6. Identify test coverage with `npm run coverage`
 
+You should use the following checklist to make sure you have a proper development environment
+
+1. Check if chromium version matches puppeteer version
+2. If you are not using Debian, you might not be using the proper chromium version
+3. If the application fails on tests and you are not sure if this is related to your development environment, execute `./server.js docker-test` in the root directory, this will ensure the app is running with the proper requirements
+
 ## Requests
 [server.js](server.js) is the service entry point. It immediately invokes
 service-runner which executes the module specified in the configuration file,
