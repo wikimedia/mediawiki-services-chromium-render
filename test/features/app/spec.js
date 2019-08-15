@@ -51,15 +51,15 @@ function validateExamples(pathStr, defParams, mSpec) {
     }
 
     mSpec.forEach((ex, idx) => {
-        if (!ex.summary) {
+        if (!ex.title) {
             throw new Error(`Route ${pathStr}, example ${idx}: summary missing!`);
         }
-        ex.value.request = ex.value.request || {};
+        ex.request = ex.request || {};
         try {
-            uri.expand(Object.assign({}, defParams, ex.value.request.params || {}));
+            uri.expand(Object.assign({}, defParams, ex.request.params || {}));
         } catch (e) {
             throw new Error(
-                `Route ${pathStr}, example ${idx} (${ex.summary}): missing parameter: ${e.message}`
+                `Route ${pathStr}, example ${idx} (${ex.title}): missing parameter: ${e.message}`
             );
         }
     });
@@ -68,10 +68,10 @@ function validateExamples(pathStr, defParams, mSpec) {
 
 }
 
-function constructTestCase(summary, path, method, request, response) {
+function constructTestCase(title, path, method, request, response) {
 
     return {
-        summary,
+        title,
         request: {
             uri: server.config.uri + (path[0] === '/' ? path.substr(1) : path),
             method,
@@ -112,17 +112,17 @@ function constructTests(paths, defParams) {
                 return;
             }
             p['x-amples'].forEach((ex) => {
-                ex.value.request = ex.value.request || {};
+                ex.request = ex.request || {};
                 ret.push(constructTestCase(
-                    ex.summary,
+                    ex.title,
                     uri.toString({
                         params: Object.assign({},
                             defParams,
-                            ex.value.request.params || {})
+                            ex.request.params || {})
                     }),
                     method,
-                    ex.value.request,
-                    ex.value.response || {}
+                    ex.request,
+                    ex.response || {}
                 ));
             });
         });
@@ -283,7 +283,7 @@ describe('Swagger spec', function() {
     describe('routes', () => {
 
         constructTests(spec.paths, defParams).forEach((testCase) => {
-            it(testCase.summary, () => {
+            it(testCase.title, () => {
                 return preq(testCase.request)
                 .then((res) => {
                     validateTestResponse(testCase, res);

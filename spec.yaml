@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.1
 info:
   version: 0.4.0
   title: MediaWiki PDF Render Service
@@ -37,13 +37,12 @@ paths:
         default:
           $ref: "#/components/responses/problem"
       x-amples:
-        - summary: spec from root
-          value:
-            request:
-              query:
-                spec: true
-            response:
-              status: 200
+        - title: spec from root
+          request:
+            query:
+              spec: true
+          response:
+            status: 200
 
   # from routes/info.js
   /_info:
@@ -57,18 +56,17 @@ paths:
         default:
           $ref: "#/components/responses/problem"
       x-amples:
-        - summary: retrieve service info
-          value:
-            request: {}
-            response:
-              status: 200
-              headers:
-                content-type: application/json
-              body:
-                name: /.+/
-                description: /.+/
-                version: /.+/
-                home: /.+/
+        - title: retrieve service info
+          request: {}
+          response:
+            status: 200
+            headers:
+              content-type: application/json
+            body:
+              name: /.+/
+              description: /.+/
+              version: /.+/
+              home: /.+/
   /_info/name:
     get:
       tags:
@@ -80,15 +78,14 @@ paths:
         default:
           $ref: "#/components/responses/problem"
       x-amples:
-        - summary: retrieve service name
-          value:
-            request: {}
-            response:
-              status: 200
-              headers:
-                content-type: application/json
-              body:
-                name: /.+/
+        - title: retrieve service name
+          request: {}
+          response:
+            status: 200
+            headers:
+              content-type: application/json
+            body:
+              name: /.+/
   /_info/version:
     get:
       tags:
@@ -100,15 +97,14 @@ paths:
         default:
           $ref: "#/components/responses/problem"
       x-amples:
-        - summary: retrieve service version
-          value:
-            request: {}
-            response:
-              status: 200
-              headers:
-                content-type: application/json
-              body:
-                version: /.+/
+        - title: retrieve service version
+          request: {}
+          response:
+            status: 200
+            headers:
+              content-type: application/json
+            body:
+              version: /.+/
   /_info/home:
     get:
       tags:
@@ -118,11 +114,10 @@ paths:
         301:
           description: Redirects to the home page
       x-amples:
-        - summary: redirect to the home page
-          value:
-            request: {}
-            response:
-              status: 301
+        - title: redirect to the home page
+          request: {}
+          response:
+            status: 301
 
   /{domain}/v1/pdf/{title}/{format}/{type}:
     get:
@@ -182,54 +177,50 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
       x-amples:
-        - summary: Print the Foo page from en.wp.org in letter format
-          value:
-            request:
-              params:
-                title: Foo
-                format: letter
-                type: desktop
-            response:
-              status: 200
-              headers:
-                content-type: application/pdf
-                content-disposition: download; filename="Foo.pdf"; filename*=UTF-8''Foo.pdf
-        - summary: Print the Bar page from en.wp.org in A4 format using optimized for reading on mobile devices
-          value:
-            request:
-              params:
-                title: Bar
-                format: a4
-                type: mobile
-            response:
-              status: 200
-              headers:
-                content-type: application/pdf
-                content-disposition: download; filename="Bar.pdf"; filename*=UTF-8''Bar.pdf
-        - summary: Respond file not found for a nonexistent title
-          value:
-            request:
-              params:
-                title: Nonexistent_title
-                format: letter
-            response:
-              status: 404
-              headers:
-                content-type: application/json
-              schema:
-                type: object
-                properties:
-                  name: HTTPError
-                  status: 404
-                  message: '404'
-                  details: Article 'Nonexistent_title' not found
-        - summary: Respond bad request for an unsupported format
-          value:
-            request: {}
-            response:
-              status: 404 # FIX: this should return a 400. See T186127.
-              headers:
-                content-type: text/html # FIX: use application/json. See T186127.
+        - title: Print the Foo page from en.wp.org in letter format
+          request:
+            params:
+              title: Foo
+              format: letter
+              type: desktop
+          response:
+            status: 200
+            headers:
+              content-type: application/pdf
+              content-disposition: download; filename="Foo.pdf"; filename*=UTF-8''Foo.pdf
+        - title: Print the Bar page from en.wp.org in A4 format using optimized for reading on mobile devices
+          request:
+            params:
+              title: Bar
+              format: a4
+              type: mobile
+          response:
+            status: 200
+            headers:
+              content-type: application/pdf
+              content-disposition: download; filename="Bar.pdf"; filename*=UTF-8''Bar.pdf
+        - title: Respond file not found for a nonexistent title
+          request:
+            params:
+              title: Nonexistent_title
+              format: letter
+          response:
+            status: 404
+            headers:
+              content-type: application/json
+            schema:
+              type: object
+              properties:
+                name: HTTPError
+                status: 404
+                message: '404'
+                details: Article 'Nonexistent_title' not found
+        - title: Respond bad request for an unsupported format
+          request: {}
+          response:
+            status: 404 # FIX: this should return a 400. See T186127.
+            headers:
+              content-type: text/html # FIX: use application/json. See T186127.
 
 components:
   responses:
