@@ -25,6 +25,6 @@ variants:
   production:
     copies: [prep]
     node: { env: production }
-    apt: { packages: [ca-certificates] }
+    apt: { packages: [ca-certificates, chromium] }
     entrypoint: [node, server.js]
 
