@@ -41,7 +41,7 @@
     "js-yaml": "^3.14.0",
     "preq": "^0.5.14",
     "puppeteer-core": "^5.0.0",
-    "service-runner": "^2.7.8",
+    "service-runner": "^2.8.0",
     "swagger-router": "^0.7.1",
     "swagger-ui-dist": "^3.34.0"
   },
