@@ -39,7 +39,7 @@
     "http-shutdown": "^1.2.0",
     "js-yaml": "^3.10.0",
     "preq": "^0.5.6",
-    "puppeteer-core": "1.9.0",
+    "puppeteer-core": "1.20.0",
     "service-runner": "^2.7.2",
     "swagger-router": "^0.7.1",
     "swagger-ui-dist": "^3.22.1"
