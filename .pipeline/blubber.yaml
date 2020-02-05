@@ -1,5 +1,5 @@
 version: v4
-base: docker-registry.wikimedia.org/buster-nodejs10
+base: docker-registry.wikimedia.org/buster-nodejs10-slim
 lives:
   in: /srv/service
 runs:
