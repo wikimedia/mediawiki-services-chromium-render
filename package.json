@@ -21,7 +21,8 @@
   ],
   "author": "Wikimedia Readers Web Team",
   "contributors": [
-    "Wikimedia Readers Web Team"
+    "Wikimedia Readers Web Team",
+    "Wikimedia Product Infrastructure Team"
   ],
   "license": "Apache-2.0",
   "bugs": {
@@ -59,21 +60,5 @@
     "mocha-lcov-reporter": "^1.3.0",
     "nyc": "15.0.0",
     "openapi-schema-validator": "^3.0.3"
-  },
-  "deploy": {
-    "target": "debian:stretch",
-    "node": "6.11.1",
-    "env": {
-      "PUPPETEER_EXECUTABLE_PATH": "/usr/bin/chromium",
-      "APP_ENABLE_CANCELLABLE_PROMISES": true
-    },
-    "dependencies": {
-      "debian": [
-        "chromium",
-        "fonts-liberation",
-        "fonts-noto"
-      ],
-      "_all": []
-    }
   }
 }
