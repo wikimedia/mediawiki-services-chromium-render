@@ -130,12 +130,6 @@ function initApp(options) {
         app.conf.puppeteer_options = {};
     }
 
-    // Verify the APP_ENABLE_CANCELLABLE_PROMISES env variable
-    if (!process.env.APP_ENABLE_CANCELLABLE_PROMISES) {
-        throw new Error('The `APP_ENABLE_CANCELLABLE_PROMISES` environment variable is' +
-            ' required to be set to `true` in order to run this service');
-    }
-
     // Verify that executablePath is set and it points to an executable file
     // Looks like Puppeteer-core doesn't respect the PUPPETEER_* variables, so we need
     // to handle it by ourselves

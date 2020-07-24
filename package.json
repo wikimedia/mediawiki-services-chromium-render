@@ -4,12 +4,12 @@
   "description": "A service for converting HTML to PDF using headless Chromium",
   "main": "./app.js",
   "scripts": {
-    "start": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner",
-    "test": "APP_ENABLE_CANCELLABLE_PROMISES=true PREQ_CONNECT_TIMEOUT=15 mocha",
-    "docker-start": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-start",
-    "docker-test": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test",
-    "test-build": "APP_ENABLE_CANCELLABLE_PROMISES=true service-runner docker-test && service-runner build --deploy-repo --force",
-    "coverage": "APP_ENABLE_CANCELLABLE_PROMISES=true nyc --reporter=lcov _mocha"
+    "start": "./server.js",
+    "test": "PREQ_CONNECT_TIMEOUT=15 mocha",
+    "docker-start": "service-runner docker-start",
+    "docker-test": "service-runner docker-test",
+    "test-build": "service-runner docker-test && service-runner build --deploy-repo --force",
+    "coverage": "nyc --reporter=lcov _mocha"
   },
   "repository": {
     "type": "git",
