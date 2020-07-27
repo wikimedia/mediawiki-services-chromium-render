@@ -1,6 +1,6 @@
 {
   "name": "proton",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A service for converting HTML to PDF using headless Chromium",
   "main": "./app.js",
   "scripts": {
