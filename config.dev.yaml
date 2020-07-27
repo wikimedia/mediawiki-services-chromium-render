@@ -106,6 +106,8 @@ services:
           - '--hide-scrollbars'
           - '--disable-gpu'
           - '--no-first-run'
+          - '--single-process'
+          - '--no-zygote'
       # Regexp of domains the browser is not allowed to access during rendering the page.
       # Case-insensitive, gets anchored automatically.
       # host_blacklist: '^(?!localhost$).*'
