@@ -3,13 +3,12 @@ MediaWiki Service for rendering wiki pages in PDF using headless chromium
 
 ## Local set up and development
 1. Install dependencies with `npm install`
-2. Set the `APP_ENABLE_CANCELLABLE_PROMISES` environment variable to `true`, otherwise application will fail.
-3. Start the service with `npm start`.
-4. Use the service by visiting the following pages in a web browser:
+2. Start the service with `npm start`.
+3. Use the service by visiting the following pages in a web browser:
     * Legal size, easy to read on mobile devices: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/legal/mobile
     * A4: http://localhost:3030/en.wikipedia.org/v1/pdf/Book/a4/desktop
-5. Perform tests with `npm test`
-6. Identify test coverage with `npm run coverage`
+4. Perform tests with `npm test`
+5. Identify test coverage with `npm run coverage`
 
 You should use the following checklist to make sure you have a proper development environment
 

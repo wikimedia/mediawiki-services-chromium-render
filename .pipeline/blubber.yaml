@@ -16,10 +16,7 @@ apt: { packages: [
   fonts-noto-unhinted
 ] }
 runs:
-  environment: {
-    APP_BASE_PATH: /srv/service,
-    APP_ENABLE_CANCELLABLE_PROMISES: 'true'
-  }
+  environment: { APP_BASE_PATH: /srv/service }
 
 variants:
   build:
