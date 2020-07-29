@@ -23,10 +23,10 @@ let app;
 
 /**
  * Handle the PDF rendering error.
- * @param {Integer} error Error code, one of callbackErrors
+ * @param {*} error Error code, one of callbackErrors
  * @param {string} title Article title
  * @param {Object} res Express response resource
- * @param {Object} logger Log object
+ * @param {Object} logger Logger object
  */
 function handleError(error, title, res, logger) {
     let status;
@@ -72,7 +72,7 @@ function handleError(error, title, res, logger) {
         detail = 'Queue full. Please try again later';
     } else if (error instanceof errors.JobTimeout) {
         status = 503;
-        // Very similar situation as previously, started task timeouted, it could be a big
+        // Very similar situation as previously, started task timed out, it could be a big
         // render or just a service overload, We don't need to stop processing queue as there is
         // already one spot in the queue rendering queue.
         detail = 'Queue full. Please try again later';
@@ -81,7 +81,7 @@ function handleError(error, title, res, logger) {
         app.logger.log(
             'error/request',
             {
-                msg: `Unexpected error: ${error}`,
+                msg: `Error: ${typeof error === 'object' ? error.message : error}`,
                 trace: error.stack
             });
         status = 500;
