@@ -83,7 +83,7 @@ services:
       pdf_options:
         scale: 1
         displayHeaderFooter: false
-        printBackground: false
+        printBackground: true
         landscape: false
         pageRanges: ''
         format: 'Letter'
