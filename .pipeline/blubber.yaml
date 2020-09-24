@@ -13,7 +13,8 @@ apt: { packages: [
   fonts-noto-mono,
   fonts-noto-ui-core,
   fonts-noto-ui-extra,
-  fonts-noto-unhinted
+  fonts-noto-unhinted,
+  fonts-dejavu
 ] }
 runs:
   environment: { APP_BASE_PATH: /srv/service }
