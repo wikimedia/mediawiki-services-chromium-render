@@ -167,8 +167,58 @@ function buildQueueItem(req, logger) {
 router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res) => {
     const title = req.params.title;
     const encodedTitle = encodeURIComponent(title);
-    app.metrics.increment(`request.type.${req.params.type}`);
-    app.metrics.increment(`request.format.${req.params.format}`);
+
+    const requestsTypeMetric = app.metrics.makeMetric({
+        type: 'Counter',
+        name: 'requests.type',
+        prometheus: {
+            name: 'proton_requests_type',
+            help: 'proton requests by type',
+        },
+        labels: {
+            names: ['type'],
+            omitLabelNames: true,
+        },
+    });
+
+    const requestsFormatMetric = app.metrics.makeMetric({
+        type: 'Counter',
+        name: 'requests.format',
+        prometheus: {
+            name: 'proton_requests_format',
+            help: 'proton requests by PDF layout format',
+        },
+        labels: {
+            names: ['format'],
+            omitLabelNames: true,
+        },
+    });
+
+    const queueEventMetric = app.metrics.makeMetric({
+        type: 'Counter',
+        name: 'queue.events',
+        prometheus: {
+            name: 'proton_queue_events_total',
+            help: 'queue events'
+        },
+        labels: {
+            names: ['type'],
+            omitLabelNames: true
+        }
+    });
+
+    const pdfSizeMetric = app.metrics.makeMetric({
+        type: 'Gauge',
+        name: 'request.pdf.size',
+        prometheus: {
+            name: 'proton_pdf_size',
+            help: 'proton responses pdf size',
+        },
+    });
+
+    requestsTypeMetric.increment(1, [req.params.type]);
+    requestsFormatMetric.increment(1, [req.params.format]);
+
     const queueItem = buildQueueItem(req, app.logger);
 
     if (app.queue.isQueueFull()) {
@@ -182,7 +232,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
                 inProgressCount: app.queue.countJobsInProcessing()
             }
         );
-        app.metrics.increment('queue.full');
+        queueEventMetric.increment(1, ['full']);
         return BBPromise.resolve();
     }
 
@@ -220,7 +270,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
             'Content-Type': 'application/pdf',
             'Content-Disposition': sUtil.getContentDisposition(title)
         };
-        app.metrics.gauge(`request.pdf.size`, pdf.length);
+        pdfSizeMetric.set(pdf.length);
         res.writeHead(200, headers);
         res.end(pdf, 'binary');
     })
