@@ -71,12 +71,6 @@ services:
         headers:
           host: '{{request.params.domain}}'
           x-subdomain: '{{if(request.params.mobile, "M", "")}}'
-      restbase_req:
-        method: '{{request.method}}'
-        uri: https://{{domain}}/api/rest_v1/{+path}
-        query: '{{ default(request.query, {}) }}'
-        headers: '{{request.headers}}'
-        body: '{{request.body}}'
       # https://github.com/GoogleChrome/puppeteer/blob/v0.13.0/docs/api.md#pagepdfoptions
       # Explicitly override defaults so that we don't have unexected results
       # after puppeteer upgrades

@@ -7,7 +7,6 @@ const { bindQueueLoggerAndMetrics } = require('../lib/queueLogger');
 const errors = require('../lib/errors');
 const sUtil = require('../lib/util');
 const uuid = require('cassandra-uuid');
-const apiUtil = require('../lib/api-util');
 const { Renderer } = require('../lib/renderer');
 const BBPromise = require('bluebird');
 
@@ -166,7 +165,6 @@ function buildQueueItem(req, logger) {
  */
 router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res) => {
     const title = req.params.title;
-    const encodedTitle = encodeURIComponent(title);
 
     const requestsTypeMetric = app.metrics.makeMetric({
         type: 'Counter',
@@ -236,33 +234,19 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
         return BBPromise.resolve();
     }
 
-    return apiUtil.restApiGet(app, req.params.domain, `page/title/${encodedTitle}`).then(() => {
-        // we don't need to process the response, we're just expecting that article exists
-        const promise = app.queue.push(queueItem);
-        req.on('close', () => {
-            app.logger.log(
-                'debug/request',
-                {
-                    msg: `Connection closed by the client. `,
-                    id: queueItem.jobId
-                }
+    const promise = app.queue.push(queueItem);
+    req.on('close', () => {
+        app.logger.log(
+            'debug/request',
+            {
+                msg: `Connection closed by the client. `,
+                id: queueItem.jobId
+            }
 
-            );
-            promise.cancel();
-        });
-        return promise;
-    }, (error) => {
-        if (error.status) {
-            throw new errors.NavigationError(
-                error.status,
-                `RESTBASE error: ${error.message || error.detail}`,
-                queueItem.jobId,
-                req.params
-            );
-        }
-        throw error;
-    })
-    .then((pdf) => {
+        );
+        promise.cancel();
+    });
+    return promise.then((pdf) => {
         if (!pdf) {
             throw new errors.PuppeteerMalformedResponseError();
         }
@@ -273,8 +257,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
         pdfSizeMetric.set(pdf.length);
         res.writeHead(200, headers);
         res.end(pdf, 'binary');
-    })
-    .catch((error) => {
+    }).catch((error) => {
         if (error instanceof errors.NavigationError) {
             // NavigationErrors from renderer will not have jobId nor params, inject those
             error = new errors.NavigationError(
