@@ -251,8 +251,9 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
             throw new errors.PuppeteerMalformedResponseError();
         }
         const headers = {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': sUtil.getContentDisposition(title)
+            'content-type': 'application/pdf',
+            'content-disposition': sUtil.getContentDisposition(title),
+            'content-length': pdf.length
         };
         pdfSizeMetric.set(pdf.length);
         res.writeHead(200, headers);

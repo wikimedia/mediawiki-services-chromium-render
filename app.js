@@ -33,8 +33,10 @@ function initApp(options) {
     if (app.conf.compression_level === undefined) { app.conf.compression_level = 3; }
     if (app.conf.cors === undefined) { app.conf.cors = '*'; }
     if (app.conf.csp === undefined) {
-        // eslint-disable-next-line max-len
-        app.conf.csp = "default-src 'self'; object-src 'none'; media-src *; img-src *; style-src *; frame-ancestors 'self'";
+        app.conf.csp = "default-src 'none'; frame-ancestors 'none'";
+    }
+    if (app.conf.cache_control === undefined) {
+        app.conf.cache_control = 's-maxage=600, max-age=600';
     }
 
     // set outgoing proxy
@@ -96,8 +98,10 @@ function initApp(options) {
     app.all('*', (req, res, next) => {
         if (app.conf.cors !== false) {
             res.header('access-control-allow-origin', app.conf.cors);
-            res.header('access-control-allow-headers', 'accept, x-requested-with, content-type');
+            // eslint-disable-next-line max-len
+            res.header('access-control-allow-headers', 'accept, content-type, content-length, cache-control');
             res.header('access-control-expose-headers', 'etag');
+            res.header('access-control-allow-methods', 'GET,HEAD');
         }
         if (app.conf.csp !== false) {
             res.header('x-xss-protection', '1; mode=block');
@@ -107,7 +111,17 @@ function initApp(options) {
             res.header('x-content-security-policy', app.conf.csp);
             res.header('x-webkit-csp', app.conf.csp);
         }
+
+        res.header('cache-control', app.conf.cache_control);
+        // Restrict referrer forwarding
+        // (https://phabricator.wikimedia.org/T173509)
+        res.header('referrer-policy' , 'origin-when-cross-origin');
+
         sUtil.initAndLogRequest(req, app);
+
+        // In case we don't yet have an x-request-id, sUtil.initAndLog... will create one
+        res.header('x-request-id', req.headers['x-request-id']);
+
         next();
     });
 

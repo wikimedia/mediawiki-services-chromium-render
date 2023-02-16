@@ -39,6 +39,7 @@ services:
       # spec: ./spec.yaml
       # allow cross-domain requests to the API (default '*')
       cors: '*'
+      cache_control: 's-maxage=600, max-age=600'
       # to disable use:
       # cors: false
       # to restrict to a particular domain, use:

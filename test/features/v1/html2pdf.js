@@ -20,6 +20,15 @@ describe('html2pdf', function() {
         .then((res) => {
             assert.status(res, 200);
             assert.contentType(res, 'application/pdf');
+            // This page has some content, so shouldn't be zero.
+            assert.contentLengthIsNot(res, 0);
+            assert.cacheControl(res, 's-maxage=600, max-age=600');
+
+            // For example: 81efa310-c17a-11ed-b000-77943ff432ae
+            const regex = new RegExp(
+                '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}'
+            );
+            assert.xRequestId(res, regex);
             assert.deepEqual(
                 Buffer.isBuffer(res.body), true, 'Unexpected body!');
         });
