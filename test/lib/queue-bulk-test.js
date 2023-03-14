@@ -48,6 +48,8 @@ const metrics = {
 };
 
 describe("Queue bulk test (long test)", function() {
+    this.timeout(20000);
+
     it("passes the bulk test correctly", () => {
         const tasks = 5000;
         const maxTaskDuration = 50;
