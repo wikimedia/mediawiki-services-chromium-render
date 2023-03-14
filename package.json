@@ -6,7 +6,8 @@
   "scripts": {
     "start": "./server.js",
     "lint": "eslint --max-warnings 0 --ext .js --ext .json .",
-    "test": "npm run lint && PREQ_CONNECT_TIMEOUT=15 nyc --reporter text-summary _mocha",
+    "mocha": "mocha --recursive test",
+    "test": "npm run lint && PREQ_CONNECT_TIMEOUT=15 nyc --reporter text-summary npm run mocha",
     "docker-start": "service-runner docker-start",
     "docker-test": "service-runner docker-test",
     "test-build": "service-runner docker-test && service-runner build --deploy-repo --force",
