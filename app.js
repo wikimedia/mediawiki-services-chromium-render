@@ -63,7 +63,7 @@ function initApp(options) {
     }).join('|')})$`, 'i');
 
     // set up the request templates for the APIs
-    apiUtil.setupApiTemplates(app);
+    apiUtil.setupRequestTemplate(app);
 
     // set up the spec
     if (!app.conf.spec) {
