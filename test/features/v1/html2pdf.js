@@ -29,6 +29,10 @@ describe('html2pdf', function() {
                 '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}'
             );
             assert.xRequestId(res, regex);
+            assert.contentDisposition(
+                res,
+                'attachment; filename="CP%2FM-86.pdf"; filename*=UTF-8\'\'CP%2FM-86.pdf'
+            );
             assert.deepEqual(
                 Buffer.isBuffer(res.body), true, 'Unexpected body!');
         });

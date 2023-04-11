@@ -187,7 +187,7 @@ paths:
             status: 200
             headers:
               content-type: application/pdf
-              content-disposition: download; filename="Foo.pdf"; filename*=UTF-8''Foo.pdf
+              content-disposition: attachment; filename="Foo.pdf"; filename*=UTF-8''Foo.pdf
         - title: Print the Bar page from en.wp.org in A4 format using optimized for reading on mobile devices
           request:
             params:
@@ -198,7 +198,7 @@ paths:
             status: 200
             headers:
               content-type: application/pdf
-              content-disposition: download; filename="Bar.pdf"; filename*=UTF-8''Bar.pdf
+              content-disposition: attachment; filename="Bar.pdf"; filename*=UTF-8''Bar.pdf
         - title: Respond file not found for a nonexistent title
           request:
             params:

@@ -76,6 +76,17 @@ function xRequestId(res, expectedMatch) {
 }
 
 
+/*
+ * Assert whether content disposition was as expected
+ */
+function contentDisposition(res, expected) {
+
+    const actual = res.headers['content-disposition'];
+    deepEqual(actual, expected,
+        `Expected content-disposition to be ${expected}, but was ${actual}`);
+}
+
+
 function isDeepEqual(result, expected, message) {
 
     try {
@@ -133,6 +144,7 @@ module.exports.isDeepEqual        = isDeepEqual;
 module.exports.notDeepEqual       = notDeepEqual;
 module.exports.contentType        = contentType;
 module.exports.contentLengthIsNot = contentLengthIsNot;
+module.exports.contentDisposition = contentDisposition;
 module.exports.cacheControl       = cacheControl;
 module.exports.xRequestId         = xRequestId;
 module.exports.status             = status;
