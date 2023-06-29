@@ -163,7 +163,7 @@ function buildQueueItem(req, logger) {
 /**
  * Returns PDF representation of the article
  */
-router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res) => {
+router.get('/:title/:format(letter|a4|legal)?/:type(mobile|desktop)?', (req, res) => {
     const title = req.params.title;
 
     const requestsTypeMetric = app.metrics.makeMetric({
@@ -215,7 +215,7 @@ router.get('/:title/:format(letter|a4|legal)/:type(mobile|desktop)?', (req, res)
     });
 
     requestsTypeMetric.increment(1, [req.params.type]);
-    requestsFormatMetric.increment(1, [req.params.format]);
+    requestsFormatMetric.increment(1, [req.params.format || 'default']);
 
     const queueItem = buildQueueItem(req, app.logger);
 

@@ -142,8 +142,8 @@ paths:
           schema:
             type: string
             enum: ['a4', 'letter', 'legal']
-          required: true
-          description: PDF format
+          required: false
+          description: PDF format, default value is 'a4' set via config
         - in: path
           name: type
           schema:
@@ -177,6 +177,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/HTTPError"
       x-amples:
+        - title: Print the Foo page from en.wp.org with default format and type
+          request:
+            params:
+              title: Foo
+          response:
+            status: 200
+            headers:
+              content-type: application/pdf
+              content-disposition: attachment; filename="Foo.pdf"; filename*=UTF-8''Foo.pdf
         - title: Print the Foo page from en.wp.org in letter format
           request:
             params:

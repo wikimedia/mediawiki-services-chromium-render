@@ -81,7 +81,7 @@ services:
         printBackground: true
         landscape: false
         pageRanges: ''
-        format: 'Letter'
+        format: 'a4'
         margin:
           top: '0.5in'
           right: '0.5in'

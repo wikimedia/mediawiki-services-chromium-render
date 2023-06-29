@@ -13,9 +13,9 @@ describe('html2pdf', function() {
     this.timeout(20000);
     before(() => server.start());
 
-    it('should return a letter-sized PDF',() => {
+    it('should return a PDF in default format',() => {
         return preq.get(
-            `${server.config.uri}en.wikipedia.org/v1/pdf/CP%2FM-86/letter`
+            `${server.config.uri}en.wikipedia.org/v1/pdf/CP%2FM-86`
         )
         .then((res) => {
             assert.status(res, 200);
@@ -37,4 +37,5 @@ describe('html2pdf', function() {
                 Buffer.isBuffer(res.body), true, 'Unexpected body!');
         });
     });
+
 });
