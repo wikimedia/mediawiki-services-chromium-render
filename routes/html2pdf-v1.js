@@ -246,18 +246,20 @@ router.get('/:title/:format(letter|a4|legal)?/:type(mobile|desktop)?', (req, res
         );
         promise.cancel();
     });
-    return promise.then((pdf) => {
-        if (!pdf) {
+    return promise.then((pdfDetails) => {
+        if (!pdfDetails.buffer) {
             throw new errors.PuppeteerMalformedResponseError();
         }
+        const lastModifiedTimestamp = (new Date(pdfDetails.lastModified)).getTime() / 1000;
         const headers = {
             'content-type': 'application/pdf',
             'content-disposition': sUtil.getContentDisposition(title),
-            'content-length': pdf.length
+            'content-length': pdfDetails.buffer.length,
+            'etag': `"${lastModifiedTimestamp}|${Object.values(req.params).join('-')}"`
         };
-        pdfSizeMetric.set(pdf.length);
+        pdfSizeMetric.set(pdfDetails.buffer.length);
         res.writeHead(200, headers);
-        res.end(pdf, 'binary');
+        res.end(pdfDetails.buffer, 'binary');
     }).catch((error) => {
         if (error instanceof errors.NavigationError) {
             // NavigationErrors from renderer will not have jobId nor params, inject those
