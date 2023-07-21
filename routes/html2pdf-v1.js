@@ -250,12 +250,11 @@ router.get('/:title/:format(letter|a4|legal)?/:type(mobile|desktop)?', (req, res
         if (!pdfDetails.buffer) {
             throw new errors.PuppeteerMalformedResponseError();
         }
-        const lastModifiedTimestamp = (new Date(pdfDetails.lastModified)).getTime() / 1000;
         const headers = {
             'content-type': 'application/pdf',
             'content-disposition': sUtil.getContentDisposition(title),
             'content-length': pdfDetails.buffer.length,
-            'etag': `"${lastModifiedTimestamp}|${Object.values(req.params).join('-')}"`
+            'last-modified': pdfDetails.lastModified
         };
         pdfSizeMetric.set(pdfDetails.buffer.length);
         res.writeHead(200, headers);
