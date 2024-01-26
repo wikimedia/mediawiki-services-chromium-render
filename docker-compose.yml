@@ -1,0 +1,12 @@
+services:
+  proton:
+    build:
+      target: development
+      context: .
+      dockerfile: .pipeline/blubber.yaml
+    volumes:
+      - ./:/srv/service
+    ports:
+      - 3030:3030
+    entrypoint: ""
+    command: npm start

@@ -2,6 +2,28 @@
 MediaWiki Service for rendering wiki pages in PDF using headless chromium
 
 ## Local set up and development
+### Docker compose
+Dependencies:
+* docker
+* docker-compose
+
+To prepare your local env:
+
+1. Configure local uid/gid in `.pipeline/blubber.yaml`
+   * You can see your user/group id by running `id -u` and `id -g` in a local bash shell
+   * This allows using local files for development that are mounted on docker instance as a volume
+2. Build the service image with `docker compose build`
+3. Install dependencies with `docker compose run proton npm install`
+4. Run the tests with `docker compose run proton npm test`
+5. Start the dev server with `docker compose up`
+
+With dev server running, endpoints should be exposed in localhost: `curl localhost:3030`
+
+Local files are mounted as volumes to the docker instance of proton so changes are applied directly.
+
+To get a shell to the docker instance you can run: `docker compose run -it proton bash`
+
+### Native nodejs
 1. Install dependencies with `npm install`
 2. Start the service with `npm start`.
 3. Use the service by visiting the following pages in a web browser:

@@ -26,11 +26,15 @@ variants:
     base: docker-registry.wikimedia.org/nodejs12-devel
     copies: [local]
     apt: { packages: [git, python, pkg-config, build-essential] }
-    node: { requirements: [package.json]}
+    node: { requirements: [package.json, package-lock.json] }
     runs: { environment: { LINK: g++ } }
   development:
     includes: [build]
     entrypoint: [node, server.js]
+#    runs:
+#      uid: 1000
+#      gid: 1000
+
   test:
     includes: [build]
     entrypoint: [npm, test]
@@ -43,4 +47,3 @@ variants:
     node: { env: production }
     apt: { packages: [ca-certificates] }
     entrypoint: [node, server.js]
-
