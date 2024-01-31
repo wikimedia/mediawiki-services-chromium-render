@@ -1,5 +1,4 @@
 {
-    "extends": "eslint-config-node-services",
     "env": {
         "es6": true,
         "node": true,
