@@ -31,9 +31,9 @@ variants:
   development:
     includes: [build]
     entrypoint: [node, server.js]
-#    runs:
-#      uid: 1000
-#      gid: 1000
+#   runs:
+#     uid: 1000
+#     gid: 1000
 
   test:
     includes: [build]
