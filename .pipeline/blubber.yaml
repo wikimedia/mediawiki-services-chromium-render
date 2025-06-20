@@ -2,7 +2,7 @@
 # Last manual image build: Fri Apr 11 2025
 
 version: v4
-base: docker-registry.wikimedia.org/nodejs18-slim
+base: docker-registry.wikimedia.org/nodejs20-slim
 lives:
   in: /srv/service
 apt: { packages: [
@@ -24,7 +24,7 @@ runs:
 
 variants:
   build:
-    base: docker-registry.wikimedia.org/nodejs18-devel
+    base: docker-registry.wikimedia.org/nodejs20-slim
     copies: [local]
     apt: { packages: [git, python-is-python3, pkg-config, build-essential] }
     node: { requirements: [package.json, package-lock.json] }
@@ -32,10 +32,6 @@ variants:
   development:
     includes: [build]
     entrypoint: [node, server.js]
-#   runs:
-#     uid: 1000
-#     gid: 1000
-
   test:
     includes: [build]
     entrypoint: [npm, test]
