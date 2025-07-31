@@ -1,5 +1,5 @@
 # syntax=docker-registry.wikimedia.org/repos/releng/blubber/buildkit:v1.0.1
-# Last manual image build: Fri Apr 11 2025
+# Last manual image build: Thu Jul 31 2025
 
 version: v4
 base: docker-registry.wikimedia.org/nodejs20-slim
