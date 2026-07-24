@@ -95,7 +95,7 @@ function initApp(options) {
     }
 
     // set the CORS and CSP headers
-    app.all('*', (req, res, next) => {
+    app.all('/{*all}', (req, res, next) => {
         if (app.conf.cors !== false) {
             res.header('access-control-allow-origin', app.conf.cors);
             // eslint-disable-next-line max-len

@@ -160,10 +160,45 @@ function buildQueueItem(req, logger) {
     return new QueueItem(data);
 }
 
+const formats = new Set(['letter', 'a4', 'legal']);
+const types = new Set(['mobile', 'desktop']);
+
+/**
+ * Validates if options are from allowed sets
+ */
+function normalizePdfParams(req, res, next) {
+    const { formatOption, viewOption } = req.params;
+
+    if (viewOption !== undefined) {
+        if (!formats.has(formatOption) || !types.has(viewOption)) {
+            return next('route');
+        }
+
+        req.params.format = formatOption;
+        req.params.type = viewOption;
+    } else if (formatOption !== undefined) {
+        if (formats.has(formatOption)) {
+            req.params.format = formatOption;
+        } else if (types.has(formatOption)) {
+            req.params.type = formatOption;
+        } else {
+            return next('route');
+        }
+    }
+
+    delete req.params.formatOption;
+    delete req.params.viewOption;
+
+    return next();
+}
+
 /**
  * Returns PDF representation of the article
  */
-router.get('/:title/:format(letter|a4|legal)?/:type(mobile|desktop)?', (req, res) => {
+router.get(
+    '/:title{/:formatOption}{/:viewOption}',
+    normalizePdfParams,
+    (req, res) => {
     const title = req.params.title;
 
     const requestsTypeMetric = app.metrics.makeMetric({
