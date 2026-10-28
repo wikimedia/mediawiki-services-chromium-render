@@ -42,5 +42,7 @@ variants:
   production:
     copies: [prep]
     node: { env: production }
-    apt: { packages: [ca-certificates] }
-    entrypoint: [node, server.js]
+    apt: { packages: [ca-certificates, tini] }
+    # Chromium child processes can outlive a killed browser. Run tini as
+    # PID 1 to reap them.
+    entrypoint: [tini, --, node, server.js]
